@@ -1,1 +1,180 @@
 @import "tailwindcss";
+
+@theme {
+  --font-sans: 'Manrope', sans-serif;
+}
+
+/* ── Default theme: Minimal Clean ── */
+:root {
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --surface-alt: #f8f8f8;
+  --border-color: #ebebeb;
+  --radius: 8px;
+  --accent: #4a6cf7;
+  --accent-rgb: 74, 108, 247;
+  --text: #1a1a1a;
+  --text-sub: #888888;
+  --card-shadow: none;
+  --card-shadow-hover: 0 4px 20px rgba(0, 0, 0, 0.09);
+  --btn-radius: 6px;
+  --store-cols: 3;
+  --ease: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+[data-theme="organic"] {
+  --bg: #fafaf8;
+  --surface: #ffffff;
+  --surface-alt: #f3f0eb;
+  --border-color: #ede8e0;
+  --radius: 16px;
+  --accent: #5b8c5a;
+  --accent-rgb: 91, 140, 90;
+  --text: #2c2c2c;
+  --text-sub: #9a9088;
+  --card-shadow: 0 4px 16px rgba(0, 0, 0, 0.07);
+  --card-shadow-hover: 0 10px 32px rgba(0, 0, 0, 0.13);
+  --btn-radius: 99px;
+  --store-cols: 3;
+}
+
+[data-theme="editorial"] {
+  --bg: #f2f2f0;
+  --surface: #ffffff;
+  --surface-alt: #e8e8e4;
+  --border-color: #ddddd8;
+  --radius: 4px;
+  --accent: #e85d47;
+  --accent-rgb: 232, 93, 71;
+  --text: #111111;
+  --text-sub: #777777;
+  --card-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  --card-shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.15);
+  --btn-radius: 4px;
+  --store-cols: 2;
+}
+
+[data-theme="darkminimal"] {
+  --bg: #0f0f12;
+  --surface: #1a1a22;
+  --surface-alt: #222230;
+  --border-color: #2e2e3e;
+  --radius: 8px;
+  --accent: #7b8fff;
+  --accent-rgb: 123, 143, 255;
+  --text: #f0f0f8;
+  --text-sub: #6a6a88;
+  --card-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+  --card-shadow-hover: 0 8px 32px rgba(0, 0, 0, 0.6);
+  --btn-radius: 6px;
+  --store-cols: 3;
+}
+
+[data-theme="darkwarm"] {
+  --bg: #16130f;
+  --surface: #211d18;
+  --surface-alt: #2a2520;
+  --border-color: #3a3328;
+  --radius: 12px;
+  --accent: #e8a84a;
+  --accent-rgb: 232, 168, 74;
+  --text: #f5efe6;
+  --text-sub: #7a6e60;
+  --card-shadow: 0 2px 14px rgba(0, 0, 0, 0.45);
+  --card-shadow-hover: 0 10px 36px rgba(0, 0, 0, 0.65);
+  --btn-radius: 10px;
+  --store-cols: 3;
+}
+
+/* ── Base ── */
+html,
+body,
+#app {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  transition: background 300ms, color 300ms;
+}
+
+/* ── Keyframes ── */
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ── Animation utilities ── */
+@utility stagger-in {
+  animation: fadeSlideIn 280ms var(--ease) both;
+}
+
+@utility fade-in {
+  animation: fadeIn 200ms var(--ease) both;
+}
+
+@utility slide-in-right {
+  animation: toastIn 300ms var(--ease) both;
+}
+
+@utility spin-anim {
+  animation: spin 600ms linear infinite;
+}
+
+/* ── Grid utility for theme-driven columns ── */
+@utility grid-store-cols {
+  grid-template-columns: repeat(var(--store-cols), minmax(0, 1fr));
+}
+
+/* ── Responsive column override ── */
+@media (max-width: 900px) {
+  :root {
+    --store-cols: 2;
+  }
+}
+
+@media (max-width: 540px) {
+  :root {
+    --store-cols: 1;
+  }
+}

@@ -9,6 +9,11 @@ const router = createRouter({
       name: 'home',
       component: HomeView,
     },
+    {
+      path: '/preview',
+      name: 'preview',
+      component: () => import('../views/StorefrontView.vue'),
+    },
   ],
 })
 
