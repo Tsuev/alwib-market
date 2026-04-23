@@ -21,6 +21,13 @@ const router = createRouter({
       name: 'preview',
       component: () => import('../views/StorefrontView.vue'),
     },
+    {
+      path: '/:slug',
+      name: 'storefront',
+      component: () => import('../views/StorefrontView.vue'),
+      meta: { public: true },
+      props: true,
+    },
   ],
 })
 

@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { tv } from 'tailwind-variants'
 import InputText from 'primevue/inputtext'
+import InputMask from 'primevue/inputmask'
 import { useToast } from 'primevue/usetoast'
 import { useStoreBuilderStore } from '@/stores/storeBuilder'
 import { THEMES } from '@/constants/constants'
@@ -18,11 +19,15 @@ const store = useStoreBuilderStore()
 const toast = useToast()
 
 const nameError = ref('')
+const domainError = ref('')
+const contactError = ref('')
+const whatsappError = ref('')
 const showModal = ref(false)
 const editProduct = ref<Product | null>(null)
 const domainStatus = ref<'idle' | 'checking' | 'available' | 'taken'>('idle')
 const domainFocused = ref(false)
 const bannerUploading = ref(false)
+const copied = ref(false)
 let domainTimer: ReturnType<typeof setTimeout> | null = null
 
 const TAKEN_SLUGS = ['test', 'admin', 'store', 'shop', 'market', 'alwib']
@@ -92,6 +97,9 @@ const styles = tv({
       'inline-flex items-center justify-center gap-2 px-[22px] py-2.5 bg-[var(--accent)] text-white rounded-[var(--btn-radius)] text-sm font-semibold hover:opacity-85 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed transition-[opacity,transform] duration-[180ms] border-0 cursor-pointer',
     publishSpinner:
       'w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin inline-block',
+    copyBtn:
+      'px-2.5 flex items-center self-stretch border-l border-[var(--border-color)] text-[var(--text-sub)] transition-[color,background] duration-[180ms] hover:bg-[var(--surface-alt)] hover:text-[var(--text)]',
+    copyBtnDone: 'text-[#5b8c5a]',
   },
 })
 
@@ -126,6 +134,7 @@ function handleDomainInput(e: Event) {
   const raw = (e.target as HTMLInputElement).value
   const clean = raw.replace(/[^a-z0-9-]/g, '').toLowerCase()
   store.storeData.domain = clean
+  domainError.value = ''
   domainStatus.value = 'checking'
   if (domainTimer) clearTimeout(domainTimer)
   if (!clean) {
@@ -137,11 +146,36 @@ function handleDomainInput(e: Event) {
   }, 600)
 }
 
+function validateWhatsapp(val: string | null): boolean {
+  if (!val) return true
+  const digits = val.replace(/\D/g, '')
+  return digits.length === 11
+}
+
 async function handlePublish() {
+  let hasError = false
+
   if (store.storeData.name.trim().length < 3) {
-    nameError.value = 'Минимум 3 символа'
-    return
+    nameError.value = store.storeData.name.length === 0 ? 'Обязательное поле' : 'Минимум 3 символа'
+    hasError = true
   }
+  if (!store.storeData.domain.trim()) {
+    domainError.value = 'Обязательное поле'
+    hasError = true
+  }
+  if (!validateWhatsapp(store.storeData.whatsapp)) {
+    whatsappError.value = 'Введите корректный номер'
+    hasError = true
+  }
+  const hasContact =
+    (store.storeData.whatsapp && store.storeData.whatsapp.replace(/\D/g, '').length === 11) ||
+    !!store.storeData.telegram?.trim()
+  if (!hasContact) {
+    contactError.value = 'Укажите WhatsApp или Telegram для связи с покупателями'
+    hasError = true
+  }
+
+  if (hasError) return
   try {
     await store.publishStore()
     toast.add({
@@ -158,6 +192,14 @@ async function handlePublish() {
       life: 4000,
     })
   }
+}
+
+function copyLink() {
+  const domain = store.storeData.domain
+  if (!domain) return
+  navigator.clipboard.writeText(`${window.location.origin}/${domain}`)
+  copied.value = true
+  setTimeout(() => (copied.value = false), 1500)
 }
 
 function openAdd() {
@@ -189,7 +231,7 @@ function openEdit(p: Product) {
             />
             <path d="M8 21h8M12 17v4" stroke="var(--accent)" stroke-width="1.5" />
           </svg>
-          <span>Виртуальная витрина</span>
+          <span>Онлайн Витрина</span>
         </div>
 
         <div :class="s.themeTabs()">
@@ -255,7 +297,7 @@ function openEdit(p: Product) {
           <!-- Domain field -->
           <div :class="s.formGroup()">
             <label :class="s.label()">Адрес магазина</label>
-            <div :class="[s.domainWrap(), domainFocused && s.domainWrapFocus()]">
+            <div :class="[s.domainWrap(), domainFocused && s.domainWrapFocus(), domainError && 'border-[#E85D47]']">
               <span :class="s.domainPrefix()">alwib.ru/</span>
               <input
                 :class="s.domainInput()"
@@ -270,9 +312,24 @@ function openEdit(p: Product) {
                 <span v-else-if="domainStatus === 'available'" :class="s.statusOk()">✓</span>
                 <span v-else-if="domainStatus === 'taken'" :class="s.statusErr()">✕</span>
               </span>
+              <button
+                v-if="store.storeData.domain"
+                :class="[s.copyBtn(), copied && s.copyBtnDone()]"
+                :title="copied ? 'Скопировано!' : 'Скопировать ссылку'"
+                @click="copyLink"
+              >
+                <svg v-if="!copied" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" />
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                </svg>
+                <svg v-else width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              </button>
             </div>
+            <div v-if="domainError" :class="s.fieldError() + ' fade-in'">{{ domainError }}</div>
             <div
-              v-if="domainStatus === 'available'"
+              v-else-if="domainStatus === 'available'"
               :class="[s.fieldHint(), s.fieldHintGreen(), 'fade-in']"
             >
               Домен свободен
@@ -283,6 +340,32 @@ function openEdit(p: Product) {
             >
               Занят, попробуйте другой
             </div>
+          </div>
+          <!-- Contacts -->
+          <div :class="s.formGroup()">
+            <label :class="s.label()">WhatsApp</label>
+            <InputMask
+              v-model="store.storeData.whatsapp"
+              mask="+7 (999) 999-99-99"
+              placeholder="+7 (999) 999-99-99"
+              :pt="{
+                root: { class: [s.input(), whatsappError && s.inputInvalid()] },
+              }"
+              @blur="whatsappError = validateWhatsapp(store.storeData.whatsapp) ? '' : 'Введите корректный номер'"
+              @input="whatsappError = ''; contactError = ''"
+            />
+            <div v-if="whatsappError" :class="s.fieldError()">{{ whatsappError }}</div>
+          </div>
+
+          <div :class="s.formGroup()">
+            <label :class="s.label()">Telegram</label>
+            <InputText
+              v-model="store.storeData.telegram"
+              placeholder="@username"
+              :pt="{ root: { class: s.input() } }"
+              @input="contactError = ''"
+            />
+            <div v-if="contactError" :class="s.fieldError() + ' fade-in'">{{ contactError }}</div>
           </div>
         </section>
 

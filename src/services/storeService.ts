@@ -11,6 +11,8 @@ interface DbStore {
   description: string | null
   logo_url: string | null
   theme: string | null
+  whatsapp: string | null
+  telegram: string | null
   created_at: string
 }
 
@@ -22,6 +24,8 @@ function fromDb(row: DbStore): StoreData & { id: number; theme: string } {
     description: row.description || '',
     photo: row.logo_url || null,
     theme: row.theme || 'minimal',
+    whatsapp: row.whatsapp || null,
+    telegram: row.telegram || null,
   }
 }
 
@@ -38,6 +42,28 @@ export async function loadStore(
   return data ? fromDb(data as DbStore) : null
 }
 
+export async function loadStoreBySlug(
+  slug: string,
+): Promise<(StoreData & { id: number; theme: string }) | null> {
+  const { data, error } = await supabase
+    .from('stores')
+    .select('*')
+    .eq('slug', slug)
+    .maybeSingle()
+
+  if (error) throw new Error(error.message)
+  return data ? fromDb(data as DbStore) : null
+}
+
+export async function updateTheme(storeId: number, theme: string): Promise<void> {
+  const { error } = await supabase
+    .from('stores')
+    .update({ theme })
+    .eq('id', storeId)
+
+  if (error) throw new Error(error.message)
+}
+
 export async function saveStore(
   data: StoreData,
   userId: string,
@@ -50,6 +76,8 @@ export async function saveStore(
     description: data.description || null,
     logo_url: data.photo || null,
     theme,
+    whatsapp: data.whatsapp || null,
+    telegram: data.telegram || null,
   }
 
   if (data.id) {

@@ -1,15 +1,86 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { tv } from 'tailwind-variants'
 import { useStoreBuilderStore } from '@/stores/storeBuilder'
+import { loadStoreBySlug } from '@/services/storeService'
+import { loadProducts } from '@/services/productService'
+import { applyTheme } from '@/composables/useTheme'
 import StorePreloader from '@/components/storeBuilder/StorePreloader.vue'
 import StoreProductCard from '@/components/storeBuilder/StoreProductCard.vue'
 import ProductDetailDialog from '@/components/storeBuilder/ProductDetailDialog.vue'
-import type { Product } from '@/types/types'
+import type { Product, StoreData } from '@/types/types'
+
+const props = defineProps<{ slug?: string }>()
+
+const originalTitle = document.title
+
+function setMetaTag(attr: string, key: string, content: string) {
+  let el = document.querySelector<HTMLMetaElement>(`meta[${attr}="${key}"]`)
+  if (!el) {
+    el = document.createElement('meta')
+    el.setAttribute(attr, key)
+    document.head.appendChild(el)
+  }
+  el.setAttribute('content', content)
+}
+
+const originalFavicon = (document.querySelector<HTMLLinkElement>('link[rel="icon"]'))?.href ?? ''
+
+function setFavicon(url: string | null) {
+  let el = document.querySelector<HTMLLinkElement>('link[rel="icon"]')
+  if (!el) {
+    el = document.createElement('link')
+    el.rel = 'icon'
+    document.head.appendChild(el)
+  }
+  el.href = url ?? ''
+  el.type = 'image/png'
+}
+
+function applyPageMeta(name: string, photo: string | null) {
+  document.title = name || 'Магазин'
+  setMetaTag('property', 'og:title', name)
+  setMetaTag('name', 'twitter:title', name)
+  if (photo) {
+    setMetaTag('property', 'og:image', photo)
+    setMetaTag('name', 'twitter:image', photo)
+    setFavicon(photo)
+  }
+}
+
+onUnmounted(() => {
+  document.title = originalTitle
+  setFavicon(originalFavicon || null)
+})
 
 const router = useRouter()
 const store = useStoreBuilderStore()
+
+// Public mode state (only used when slug prop is present)
+const publicStoreData = ref<(StoreData & { theme: string }) | null>(null)
+const publicProducts = ref<Product[]>([])
+const notFound = ref(false)
+
+// Unified accessors — template always uses these
+const displayName = computed(() =>
+  props.slug ? publicStoreData.value?.name ?? '' : store.storeData.name,
+)
+const displayPhoto = computed(() =>
+  props.slug ? publicStoreData.value?.photo ?? null : store.storeData.photo,
+)
+const displayDomain = computed(() =>
+  props.slug ? publicStoreData.value?.domain ?? '' : store.storeData.domain,
+)
+const displayWhatsapp = computed(() =>
+  props.slug ? publicStoreData.value?.whatsapp ?? null : store.storeData.whatsapp,
+)
+const displayTelegram = computed(() =>
+  props.slug ? publicStoreData.value?.telegram ?? null : store.storeData.telegram,
+)
+const displayProducts = computed(() =>
+  props.slug ? publicProducts.value : store.products,
+)
 
 const ready = ref(false)
 const search = ref('')
@@ -19,11 +90,33 @@ const scrollRef = ref<HTMLElement | null>(null)
 const sticky = ref(false)
 const showTop = ref(false)
 
-const allTags = computed(() => [...new Set(store.products.flatMap((p) => p.tags))])
+onMounted(async () => {
+  if (props.slug) {
+    try {
+      const storeRow = await loadStoreBySlug(props.slug)
+      if (!storeRow) {
+        notFound.value = true
+        ready.value = true
+        return
+      }
+      const { id, theme, ...rest } = storeRow
+      publicStoreData.value = { ...rest, theme }
+      publicProducts.value = await loadProducts(id)
+      applyTheme(theme)
+      applyPageMeta(rest.name, rest.photo)
+    } catch {
+      notFound.value = true
+    } finally {
+      ready.value = true
+    }
+  }
+})
+
+const allTags = computed(() => [...new Set(displayProducts.value.flatMap((p) => p.tags))])
 
 const filtered = computed(() => {
   const q = search.value.toLowerCase()
-  return store.products.filter((p) => {
+  return displayProducts.value.filter((p) => {
     const matchSearch =
       !q ||
       p.name.toLowerCase().includes(q) ||
@@ -77,6 +170,11 @@ const styles = tv({
       'flex flex-col items-center gap-2.5 py-20 px-5 text-center text-[var(--text-sub)] fade-in',
     emptyTitle: 'text-lg font-semibold text-[var(--text)]',
     emptySmall: 'text-sm',
+    notFound:
+      'h-screen flex flex-col items-center justify-center gap-4 text-center px-6',
+    notFoundCode: 'text-[80px] font-extrabold text-[var(--accent)] leading-none',
+    notFoundTitle: 'text-2xl font-bold text-[var(--text)]',
+    notFoundSub: 'text-[var(--text-sub)] text-sm',
     scrollTopBtn:
       'fixed bottom-7 right-6 w-11 h-11 bg-[var(--text)] text-[var(--bg)] rounded-full flex items-center justify-center opacity-0 pointer-events-none transition-[opacity,transform] duration-200 shadow-[0_4px_14px_rgba(0,0,0,0.25)] hover:-translate-y-0.5',
     scrollTopBtnVisible: 'opacity-100 pointer-events-auto',
@@ -87,17 +185,24 @@ const s = styles()
 </script>
 
 <template>
-  <div :class="s.wrap()" ref="scrollRef" @scroll="onScroll">
-    <!-- Preloader -->
+  <!-- Not found (public mode only) -->
+  <div v-if="notFound" :class="s.notFound()">
+    <div :class="s.notFoundCode()">404</div>
+    <h1 :class="s.notFoundTitle()">Магазин не найден</h1>
+    <p :class="s.notFoundSub()">Страница <b>alwib.ru/{{ props.slug }}</b> не существует</p>
+  </div>
+
+  <div v-else :class="s.wrap()" ref="scrollRef" @scroll="onScroll">
+    <!-- Preloader (preview mode always shows it; public mode shows until data is loaded) -->
     <StorePreloader
       v-if="!ready"
-      :name="store.storeData.name || 'Магазин'"
-      :photo="store.storeData.photo"
+      :name="displayName || 'Магазин'"
+      :photo="displayPhoto"
       @done="ready = true"
     />
 
-    <!-- Back button -->
-    <button :class="s.backBtn()" @click="router.push('/')">
+    <!-- Back button — only in preview mode -->
+    <button v-if="!props.slug" :class="s.backBtn()" @click="router.push('/')">
       <svg
         width="16"
         height="16"
@@ -114,16 +219,16 @@ const s = styles()
     <!-- Banner -->
     <div :class="s.banner()">
       <img
-        v-if="store.storeData.photo"
-        :src="store.storeData.photo"
+        v-if="displayPhoto"
+        :src="displayPhoto"
         alt="banner"
         :class="s.bannerImg()"
       />
       <div v-else :class="s.bannerPlaceholder()" />
       <div :class="s.bannerOverlay()">
-        <h1 :class="s.bannerTitle()">{{ store.storeData.name || 'Мой магазин' }}</h1>
-        <div v-if="store.storeData.domain" :class="s.bannerDomain()">
-          alwib.ru/{{ store.storeData.domain }}
+        <h1 :class="s.bannerTitle()">{{ displayName || 'Мой магазин' }}</h1>
+        <div v-if="displayDomain" :class="s.bannerDomain()">
+          alwib.ru/{{ displayDomain }}
         </div>
       </div>
     </div>
@@ -234,6 +339,8 @@ const s = styles()
   <ProductDetailDialog
     v-if="selectedProduct"
     :product="selectedProduct"
+    :whatsapp="displayWhatsapp"
+    :telegram="displayTelegram"
     @close="selectedProduct = null"
   />
 </template>

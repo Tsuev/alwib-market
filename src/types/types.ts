@@ -18,6 +18,8 @@ export interface StoreData {
   domain: string // maps to slug in DB
   description: string
   photo: string | null
+  whatsapp: string | null
+  telegram: string | null
 }
 
 export interface Theme {

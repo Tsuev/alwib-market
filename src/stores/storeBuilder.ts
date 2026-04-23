@@ -2,10 +2,10 @@ import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import type { Product, StoreData } from '@/types/types'
 import { applyTheme } from '@/composables/useTheme'
-import { loadStore, saveStore as dbSaveStore } from '@/services/storeService'
+import { loadStore, saveStore as dbSaveStore, updateTheme as dbUpdateTheme } from '@/services/storeService'
 import { loadProducts, saveProduct as dbSaveProduct, removeProduct } from '@/services/productService'
 
-const DEFAULT_STORE: StoreData = { name: '', domain: '', description: '', photo: null }
+const DEFAULT_STORE: StoreData = { name: '', domain: '', description: '', photo: null, whatsapp: null, telegram: null }
 
 export const useStoreBuilderStore = defineStore('storeBuilder', () => {
   // Theme is cached locally for instant UI — synced to DB on publish
@@ -54,6 +54,9 @@ export const useStoreBuilderStore = defineStore('storeBuilder', () => {
     theme.value = t
     localStorage.setItem('sb_theme', t)
     applyTheme(t)
+    if (storeData.value.id) {
+      dbUpdateTheme(storeData.value.id, t).catch(() => {/* fire-and-forget, fails silently */})
+    }
   }
 
   async function saveProduct(p: Omit<Product, 'id'> & { id?: string }): Promise<void> {

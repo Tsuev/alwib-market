@@ -23,7 +23,7 @@ const styles = tv({
     placeholderAccent: 'text-[var(--accent)]',
     placeholderSmall: 'text-xs opacity-70',
     preview: 'relative',
-    previewImg: 'w-full h-[200px] object-cover block',
+    previewImg: 'w-full h-[200px] object-contain block',
     removeBtn:
       'absolute top-2.5 right-2.5 w-7 h-7 rounded-full bg-black/60 text-white text-base flex items-center justify-center opacity-0 transition-opacity duration-[180ms] hover:opacity-100',
     removeBtnVisible: 'opacity-100',

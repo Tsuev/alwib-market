@@ -5,7 +5,7 @@ import Dialog from 'primevue/dialog'
 import type { Product } from '@/types/types'
 import { formatRub, calcDiscount, placeholderSvg } from '@/composables/useImageToBase64'
 
-const props = defineProps<{ product: Product }>()
+const props = defineProps<{ product: Product; whatsapp?: string | null; telegram?: string | null }>()
 const emit = defineEmits<{ close: [] }>()
 
 const visible = ref(false)
@@ -13,6 +13,23 @@ const visible = ref(false)
 onMounted(() => nextTick(() => { visible.value = true }))
 
 const discount = calcDiscount(props.product.price, props.product.salePrice)
+
+function contactMessage() {
+  const price = props.product.salePrice
+    ? formatRub(props.product.salePrice)
+    : formatRub(props.product.price)
+  return `${props.product.name}\n${props.product.description}\n${price}\nЕсть в наличии?`
+}
+
+function waLink() {
+  const phone = (props.whatsapp ?? '').replace(/\D/g, '')
+  return `https://wa.me/${phone}?text=${encodeURIComponent(contactMessage())}`
+}
+
+function tgLink() {
+  const username = (props.telegram ?? '').replace(/^@/, '')
+  return `https://t.me/${username}`
+}
 
 const styles = tv({
   slots: {
@@ -32,7 +49,9 @@ const styles = tv({
     priceSale: 'font-bold text-[var(--accent)] text-[22px]',
     priceOrig: 'text-sm text-[var(--text-sub)] line-through',
     priceOnly: 'font-bold text-[22px] text-[var(--text)]',
-    wantBtn: 'w-full py-3.5 text-[15px] font-bold bg-[var(--accent)] text-white rounded-[var(--btn-radius)] mt-auto hover:opacity-85 active:scale-[0.98] transition-[opacity,transform] duration-[180ms]',
+    contactRow: 'flex gap-2.5 mt-auto',
+    waBtn: 'flex-1 flex items-center justify-center gap-2 py-3.5 text-[15px] font-bold bg-[#25D366] text-white rounded-[var(--btn-radius)] hover:opacity-85 active:scale-[0.98] transition-[opacity,transform] duration-[180ms]',
+    tgBtn: 'flex-1 flex items-center justify-center gap-2 py-3.5 text-[15px] font-bold bg-[#229ED9] text-white rounded-[var(--btn-radius)] hover:opacity-85 active:scale-[0.98] transition-[opacity,transform] duration-[180ms]',
   },
 })
 
@@ -93,7 +112,36 @@ function handleClose() {
           <span v-else :class="s.priceOnly()">{{ formatRub(product.price) }}</span>
         </div>
 
-        <button :class="s.wantBtn()">Хочу это →</button>
+        <div :class="s.contactRow()">
+          <a
+            v-if="props.whatsapp"
+            :href="waLink()"
+            target="_blank"
+            rel="noopener"
+            :class="s.waBtn()"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+              <path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.122 1.532 5.852L.057 23.786a.5.5 0 0 0 .602.633l6.077-1.596A11.937 11.937 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22a9.938 9.938 0 0 1-5.064-1.383l-.364-.215-3.761.988.998-3.651-.236-.373A9.953 9.953 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/>
+            </svg>
+            WhatsApp
+          </a>
+          <a
+            v-if="props.telegram"
+            :href="tgLink()"
+            target="_blank"
+            rel="noopener"
+            :class="s.tgBtn()"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.19 13.067l-2.96-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.958.492z"/>
+            </svg>
+            Telegram
+          </a>
+          <button v-if="!props.whatsapp && !props.telegram" disabled class="flex-1 py-3.5 text-[15px] font-bold bg-(--surface-alt) text-(--text-sub) rounded-(--btn-radius) cursor-default">
+            Связаться
+          </button>
+        </div>
       </div>
     </div>
   </Dialog>

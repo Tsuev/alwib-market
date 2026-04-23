@@ -62,7 +62,7 @@ const styles = tv({
     fieldError: 'text-xs text-[#E85D47] mt-1 fade-in',
     fieldHint: 'text-xs text-[var(--text-sub)] mt-1',
     priceWrap: 'relative',
-    discountBadge: 'absolute right-[-4px] top-1/2 translate-x-full -translate-y-1/2 bg-[#E85D47] text-white text-[11px] font-bold px-[7px] py-[3px] rounded-full whitespace-nowrap fade-in',
+    discountBadge: 'absolute right-2.5 top-1/2 -translate-y-1/2 bg-[#E85D47] text-white text-[11px] font-bold px-[7px] py-[3px] rounded-full whitespace-nowrap fade-in pointer-events-none',
     saveErrBox: 'mx-6 mb-0 mt-3 px-3 py-2.5 bg-[rgba(232,93,71,0.08)] border border-[#E85D47]/30 rounded-[var(--radius)] text-xs text-[#E85D47]',
     footer: 'flex justify-end items-center gap-2.5 px-6 py-4 border-t border-[var(--border-color)] shrink-0 transition-[border-color] duration-300',
     cancelBtn: 'px-4 py-2.5 text-sm font-medium text-[var(--text-sub)] rounded-[var(--btn-radius)] hover:bg-[var(--surface-alt)] hover:text-[var(--text)] transition-[background,color] duration-[180ms]',
@@ -246,7 +246,7 @@ async function handlePhotoUpload(e: Event) {
                   placeholder="1 800"
                   :pt="{
                     root: {
-                      class: s.input() + (form.salePrice ? ' text-[var(--accent)]' : ''),
+                      class: s.input() + ' pr-14' + (form.salePrice ? ' text-[var(--accent)]' : ''),
                     },
                   }"
                 />
