@@ -47,7 +47,7 @@ const styles = tv({
     backBtn:
       'fixed top-4 left-4 z-[100] flex items-center gap-1.5 px-3.5 py-2 bg-[var(--surface)] border border-[var(--border-color)] rounded-full text-[13px] font-semibold text-[var(--text)] shadow-[0_2px_12px_rgba(0,0,0,0.1)] transition-all duration-[180ms] hover:shadow-[0_4px_16px_rgba(0,0,0,0.15)] stagger-in cursor-pointer',
     banner: 'relative h-[240px] overflow-hidden bg-[var(--surface-alt)]',
-    bannerImg: 'w-full h-full object-cover',
+    bannerImg: 'w-full h-full object-contain',
     bannerPlaceholder:
       'w-full h-full bg-gradient-to-br from-[rgba(var(--accent-rgb),_0.15)] to-[rgba(var(--accent-rgb),_0.04)]',
     bannerOverlay:
