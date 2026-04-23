@@ -1,60 +1,94 @@
-import { ref, watch } from 'vue'
+import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import type { Product, StoreData } from '@/types/types'
-import { SAMPLE_PRODUCTS } from '@/constants/constants'
 import { applyTheme } from '@/composables/useTheme'
+import { loadStore, saveStore as dbSaveStore } from '@/services/storeService'
+import { loadProducts, saveProduct as dbSaveProduct, removeProduct } from '@/services/productService'
 
-const DEFAULT_STORE: StoreData = { name: 'Мастерская Берёзка', domain: 'berezka', photo: null }
-
-function loadJson<T>(key: string, fallback: T): T {
-  try {
-    const raw = localStorage.getItem(key)
-    return raw ? (JSON.parse(raw) as T) : fallback
-  } catch {
-    return fallback
-  }
-}
+const DEFAULT_STORE: StoreData = { name: '', domain: '', description: '', photo: null }
 
 export const useStoreBuilderStore = defineStore('storeBuilder', () => {
+  // Theme is cached locally for instant UI — synced to DB on publish
   const theme = ref(localStorage.getItem('sb_theme') || 'minimal')
-  const storeData = ref<StoreData>(loadJson('sb_store', DEFAULT_STORE))
-  const products = ref<Product[]>(loadJson('sb_products', SAMPLE_PRODUCTS))
+  const storeData = ref<StoreData>({ ...DEFAULT_STORE })
+  const products = ref<Product[]>([])
+  const loading = ref(false)
+  const saving = ref(false)
+  const userId = ref<string | null>(null)
 
-  // Apply saved theme on init
   applyTheme(theme.value)
 
-  watch(theme, (t) => localStorage.setItem('sb_theme', t))
-  watch(storeData, (s) => localStorage.setItem('sb_store', JSON.stringify(s)), { deep: true })
-  watch(
-    products,
-    (ps) => {
-      // Strip base64 photos before persisting — product photos are session-only
-      const lean = ps.map((p) => ({
-        ...p,
-        photo: p.photo?.startsWith('data:') ? null : p.photo,
-      }))
-      localStorage.setItem('sb_products', JSON.stringify(lean))
-    },
-    { deep: true },
-  )
-
-  function setTheme(t: string) {
-    theme.value = t
-    applyTheme(t)
-  }
-
-  function saveProduct(p: Omit<Product, 'id'> & { id?: number }) {
-    if (p.id) {
-      const idx = products.value.findIndex((x) => x.id === p.id)
-      if (idx >= 0) products.value[idx] = p as Product
-    } else {
-      products.value.unshift({ ...p, id: Date.now() } as Product)
+  async function loadData(uid: string): Promise<void> {
+    userId.value = uid
+    loading.value = true
+    try {
+      const store = await loadStore(uid)
+      if (store) {
+        const { theme: storeTheme, ...rest } = store
+        storeData.value = rest
+        theme.value = storeTheme
+        localStorage.setItem('sb_theme', storeTheme)
+        applyTheme(storeTheme)
+        products.value = await loadProducts(store.id)
+      }
+    } finally {
+      loading.value = false
     }
   }
 
-  function deleteProduct(id: number) {
+  async function publishStore(): Promise<void> {
+    if (!userId.value) throw new Error('Не авторизован')
+    saving.value = true
+    try {
+      const saved = await dbSaveStore(storeData.value, userId.value, theme.value)
+      const { theme: savedTheme, ...rest } = saved
+      storeData.value = rest
+      theme.value = savedTheme
+      localStorage.setItem('sb_theme', savedTheme)
+    } finally {
+      saving.value = false
+    }
+  }
+
+  function setTheme(t: string): void {
+    theme.value = t
+    localStorage.setItem('sb_theme', t)
+    applyTheme(t)
+  }
+
+  async function saveProduct(p: Omit<Product, 'id'> & { id?: string }): Promise<void> {
+    if (!userId.value) throw new Error('Не авторизован')
+
+    // Auto-create store on first product save if not published yet
+    if (!storeData.value.id) {
+      await publishStore()
+    }
+
+    const saved = await dbSaveProduct(p, storeData.value.id!)
+
+    if (p.id) {
+      const idx = products.value.findIndex((x) => x.id === p.id)
+      if (idx >= 0) products.value[idx] = saved
+    } else {
+      products.value.unshift(saved)
+    }
+  }
+
+  async function deleteProduct(id: string): Promise<void> {
+    await removeProduct(id)
     products.value = products.value.filter((p) => p.id !== id)
   }
 
-  return { theme, storeData, products, setTheme, saveProduct, deleteProduct }
+  return {
+    theme,
+    storeData,
+    products,
+    loading,
+    saving,
+    loadData,
+    publishStore,
+    setTheme,
+    saveProduct,
+    deleteProduct,
+  }
 })

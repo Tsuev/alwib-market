@@ -17,6 +17,7 @@ npm run format     # Prettier format src/
 Create a `.env` file with:
 - `VITE_SUPABASE_URL` — Supabase project URL
 - `VITE_SUPABASE_KEY` — Supabase anon key
+- `VITE_SUPABASE_PUBLISHABLE_KEY` — Supabase publishable key
 - `VITE_API_BASE_URL` — Base URL for the axios HTTP client
 
 ## Architecture

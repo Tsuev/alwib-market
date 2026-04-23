@@ -6,14 +6,20 @@ import InputText from 'primevue/inputtext'
 import Textarea from 'primevue/textarea'
 import InputChips from 'primevue/inputchips'
 import type { Product } from '@/types/types'
-import { imageToBase64, placeholderSvg, calcDiscount } from '@/composables/useImageToBase64'
+import { placeholderSvg, calcDiscount } from '@/composables/useImageToBase64'
+import { uploadPhoto } from '@/composables/useStorageUpload'
+import { getSession } from '@/services/authServices'
+import { useStoreBuilderStore } from '@/stores/storeBuilder'
 
 const props = defineProps<{ product: Product | null }>()
-const emit = defineEmits<{ save: [product: Omit<Product, 'id'> & { id?: number }]; close: [] }>()
+const emit = defineEmits<{ close: [] }>()
 
+const store = useStoreBuilderStore()
 const isEdit = computed(() => !!props.product)
 const visible = ref(false)
 const saving = ref(false)
+const photoUploading = ref(false)
+const saveError = ref('')
 const errors = ref<{ name?: string; price?: string }>({})
 
 const form = ref({
@@ -45,6 +51,7 @@ const styles = tv({
     photoZone: 'rounded-[var(--radius)] overflow-hidden border border-[var(--border-color)] transition-[border-color] duration-300',
     photoImg: 'w-full aspect-square object-cover',
     photoBtn: 'flex items-center justify-center gap-1.5 w-full py-[9px] text-xs font-semibold text-[var(--text-sub)] bg-[var(--surface-alt)] border-t border-[var(--border-color)] cursor-pointer transition-[background,color] duration-[180ms] hover:bg-[rgba(var(--accent-rgb),_0.08)] hover:text-[var(--accent)]',
+    photoBtnDisabled: 'opacity-50 pointer-events-none',
     formCol: 'flex flex-col',
     label: 'block text-[11px] font-bold text-[var(--text-sub)] uppercase tracking-[.07em] mb-2',
     req: 'text-[var(--accent)]',
@@ -56,10 +63,11 @@ const styles = tv({
     fieldHint: 'text-xs text-[var(--text-sub)] mt-1',
     priceWrap: 'relative',
     discountBadge: 'absolute right-[-4px] top-1/2 translate-x-full -translate-y-1/2 bg-[#E85D47] text-white text-[11px] font-bold px-[7px] py-[3px] rounded-full whitespace-nowrap fade-in',
+    saveErrBox: 'mx-6 mb-0 mt-3 px-3 py-2.5 bg-[rgba(232,93,71,0.08)] border border-[#E85D47]/30 rounded-[var(--radius)] text-xs text-[#E85D47]',
     footer: 'flex justify-end items-center gap-2.5 px-6 py-4 border-t border-[var(--border-color)] shrink-0 transition-[border-color] duration-300',
     cancelBtn: 'px-4 py-2.5 text-sm font-medium text-[var(--text-sub)] rounded-[var(--btn-radius)] hover:bg-[var(--surface-alt)] hover:text-[var(--text)] transition-[background,color] duration-[180ms]',
     saveBtn: 'inline-flex items-center justify-center gap-2 px-[22px] py-2.5 bg-[var(--accent)] text-white rounded-[var(--btn-radius)] text-sm font-semibold hover:opacity-85 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed transition-[opacity,transform] duration-[180ms]',
-    spinner: 'w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full spin-anim inline-block',
+    spinner: 'w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin inline-block',
   },
 })
 
@@ -73,12 +81,13 @@ function validate() {
   return e
 }
 
-function handleSave() {
+async function handleSave() {
   const e = validate()
   if (Object.keys(e).length) { errors.value = e; return }
+  saveError.value = ''
   saving.value = true
-  setTimeout(() => {
-    emit('save', {
+  try {
+    await store.saveProduct({
       ...(props.product?.id ? { id: props.product.id } : {}),
       name: form.value.name,
       description: form.value.description,
@@ -87,7 +96,11 @@ function handleSave() {
       tags: form.value.tags,
       photo: form.value.photo,
     })
-  }, 600)
+    handleClose()
+  } catch (err) {
+    saveError.value = err instanceof Error ? err.message : 'Ошибка при сохранении'
+    saving.value = false
+  }
 }
 
 function handleClose() {
@@ -98,9 +111,18 @@ function handleClose() {
 async function handlePhotoUpload(e: Event) {
   const file = (e.target as HTMLInputElement).files?.[0]
   if (!file) return
+  photoUploading.value = true
   try {
-    form.value.photo = await imageToBase64(file)
-  } catch { /* silent */ }
+    const session = await getSession()
+    if (!session) throw new Error('Не авторизован')
+    form.value.photo = await uploadPhoto(file, session.user.id, 'product')
+  } catch (err) {
+    saveError.value = err instanceof Error ? err.message : 'Ошибка загрузки фото'
+  } finally {
+    photoUploading.value = false
+    // reset input so the same file can be re-selected after an error
+    ;(e.target as HTMLInputElement).value = ''
+  }
 }
 </script>
 
@@ -137,19 +159,33 @@ async function handlePhotoUpload(e: Event) {
         <!-- Photo column -->
         <div>
           <div :class="s.photoZone()">
-            <img
-              :src="form.photo || placeholderSvg(form.name || 'Фото товара', 300, 300)"
-              alt="product"
-              :class="s.photoImg()"
-            />
-            <label :class="s.photoBtn()">
+            <div class="relative">
+              <img
+                :src="form.photo || placeholderSvg(form.name || 'Фото товара', 300, 300)"
+                alt="product"
+                :class="s.photoImg()"
+              />
+              <div
+                v-if="photoUploading"
+                class="absolute inset-0 flex items-center justify-center bg-black/30 backdrop-blur-[2px]"
+              >
+                <span class="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              </div>
+            </div>
+            <label :class="[s.photoBtn(), photoUploading && s.photoBtnDisabled()]">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                 <polyline points="17 8 12 3 7 8" />
                 <line x1="12" y1="3" x2="12" y2="15" />
               </svg>
-              Загрузить фото
-              <input type="file" accept="image/*" class="hidden" @change="handlePhotoUpload" />
+              {{ photoUploading ? 'Загружаем…' : 'Загрузить фото' }}
+              <input
+                type="file"
+                accept="image/*"
+                class="hidden"
+                :disabled="photoUploading"
+                @change="handlePhotoUpload"
+              />
             </label>
           </div>
         </div>
@@ -250,10 +286,13 @@ async function handlePhotoUpload(e: Event) {
       </div>
     </div>
 
+    <!-- Save error -->
+    <div v-if="saveError" :class="s.saveErrBox()">{{ saveError }}</div>
+
     <!-- Custom footer -->
     <div :class="s.footer()">
       <button :class="s.cancelBtn()" @click="handleClose">Отмена</button>
-      <button :class="s.saveBtn()" :disabled="saving" @click="handleSave">
+      <button :class="s.saveBtn()" :disabled="saving || photoUploading" @click="handleSave">
         <span v-if="saving" :class="s.spinner()" />
         <span v-else>Сохранить товар</span>
       </button>

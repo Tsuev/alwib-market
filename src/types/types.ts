@@ -3,7 +3,7 @@ export interface Type {
 }
 
 export interface Product {
-  id: number
+  id: string // uuid from Supabase
   name: string
   description: string
   price: number
@@ -13,8 +13,10 @@ export interface Product {
 }
 
 export interface StoreData {
+  id?: number // bigint from Supabase, undefined for unsaved stores
   name: string
-  domain: string
+  domain: string // maps to slug in DB
+  description: string
   photo: string | null
 }
 

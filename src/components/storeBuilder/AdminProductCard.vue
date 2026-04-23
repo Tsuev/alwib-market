@@ -6,7 +6,7 @@ import type { Product } from '@/types/types'
 import { formatRub, calcDiscount, placeholderSvg } from '@/composables/useImageToBase64'
 
 const props = defineProps<{ product: Product; animIdx: number }>()
-const emit = defineEmits<{ edit: [product: Product]; delete: [id: number] }>()
+const emit = defineEmits<{ edit: [product: Product]; delete: [id: string] }>()
 
 const leaving = ref(false)
 

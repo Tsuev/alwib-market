@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { tv } from 'tailwind-variants'
 import InputText from 'primevue/inputtext'
 import { useToast } from 'primevue/usetoast'
 import { useStoreBuilderStore } from '@/stores/storeBuilder'
 import { THEMES } from '@/constants/constants'
+import { uploadPhoto } from '@/composables/useStorageUpload'
+import { getSession } from '@/services/authServices'
 import UploadZone from '@/components/storeBuilder/UploadZone.vue'
 import AdminProductCard from '@/components/storeBuilder/AdminProductCard.vue'
 import ProductFormDialog from '@/components/storeBuilder/ProductFormDialog.vue'
@@ -18,9 +20,9 @@ const toast = useToast()
 const nameError = ref('')
 const showModal = ref(false)
 const editProduct = ref<Product | null>(null)
-const publishing = ref(false)
 const domainStatus = ref<'idle' | 'checking' | 'available' | 'taken'>('idle')
 const domainFocused = ref(false)
+const bannerUploading = ref(false)
 let domainTimer: ReturnType<typeof setTimeout> | null = null
 
 const TAKEN_SLUGS = ['test', 'admin', 'store', 'shop', 'market', 'alwib']
@@ -41,6 +43,9 @@ const styles = tv({
     themeTabActive:
       'bg-[var(--surface)] text-[var(--text)] shadow-[0_1px_4px_rgba(0,0,0,0.1)]',
     themeDot: 'w-2 h-2 rounded-full shrink-0',
+    loadingWrap: 'flex-1 flex items-center justify-center',
+    loadingSpinner:
+      'w-8 h-8 border-[3px] border-[rgba(var(--accent-rgb),_0.2)] border-t-[var(--accent)] rounded-full animate-spin',
     scrollArea: 'flex-1 overflow-y-auto',
     contentInner: 'max-w-[900px] mx-auto px-8 py-8 pb-[120px]',
     section: 'mb-10',
@@ -72,7 +77,7 @@ const styles = tv({
     statusOk: 'text-[#5b8c5a] text-[15px] font-bold',
     statusErr: 'text-[#e85d47] text-[15px] font-bold',
     spinner:
-      'w-3.5 h-3.5 border-2 border-[rgba(var(--accent-rgb),_0.2)] border-t-[var(--accent)] rounded-full spin-anim inline-block',
+      'w-3.5 h-3.5 border-2 border-[rgba(var(--accent-rgb),_0.2)] border-t-[var(--accent)] rounded-full animate-spin inline-block',
     addBtn:
       'inline-flex items-center gap-[7px] px-4 py-2 border-[1.5px] border-[var(--accent)] text-[var(--accent)] rounded-[var(--btn-radius)] text-[13px] font-semibold transition-[background] duration-[180ms] hover:bg-[rgba(var(--accent-rgb),_0.07)]',
     emptyProducts:
@@ -86,11 +91,36 @@ const styles = tv({
     publishBtn:
       'inline-flex items-center justify-center gap-2 px-[22px] py-2.5 bg-[var(--accent)] text-white rounded-[var(--btn-radius)] text-sm font-semibold hover:opacity-85 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed transition-[opacity,transform] duration-[180ms] border-0 cursor-pointer',
     publishSpinner:
-      'w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full spin-anim inline-block',
+      'w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin inline-block',
   },
 })
 
 const s = styles()
+
+onMounted(async () => {
+  const session = await getSession()
+  if (session) {
+    await store.loadData(session.user.id)
+  }
+})
+
+async function handleBannerUpload(file: File) {
+  const session = await getSession()
+  if (!session) return
+  bannerUploading.value = true
+  try {
+    store.storeData.photo = await uploadPhoto(file, session.user.id, 'store')
+  } catch (err) {
+    toast.add({
+      severity: 'error',
+      summary: 'Ошибка загрузки',
+      detail: err instanceof Error ? err.message : 'Не удалось загрузить фото',
+      life: 4000,
+    })
+  } finally {
+    bannerUploading.value = false
+  }
+}
 
 function handleDomainInput(e: Event) {
   const raw = (e.target as HTMLInputElement).value
@@ -107,21 +137,27 @@ function handleDomainInput(e: Event) {
   }, 600)
 }
 
-function handlePublish() {
+async function handlePublish() {
   if (store.storeData.name.trim().length < 3) {
     nameError.value = 'Минимум 3 символа'
     return
   }
-  publishing.value = true
-  setTimeout(() => {
-    publishing.value = false
+  try {
+    await store.publishStore()
     toast.add({
       severity: 'success',
       summary: 'Готово',
-      detail: 'Магазин успешно опубликован!',
+      detail: 'Магазин успешно сохранён!',
       life: 3000,
     })
-  }, 1500)
+  } catch (err) {
+    toast.add({
+      severity: 'error',
+      summary: 'Ошибка',
+      detail: err instanceof Error ? err.message : 'Ошибка сохранения',
+      life: 4000,
+    })
+  }
 }
 
 function openAdd() {
@@ -131,12 +167,6 @@ function openAdd() {
 function openEdit(p: Product) {
   editProduct.value = p
   showModal.value = true
-}
-
-function handleSave(p: Parameters<typeof store.saveProduct>[0]) {
-  store.saveProduct(p)
-  showModal.value = false
-  editProduct.value = null
 }
 </script>
 
@@ -176,8 +206,13 @@ function handleSave(p: Parameters<typeof store.saveProduct>[0]) {
       </div>
     </header>
 
+    <!-- Loading state -->
+    <div v-if="store.loading" :class="s.loadingWrap()">
+      <span :class="s.loadingSpinner()" />
+    </div>
+
     <!-- Scrollable content -->
-    <div :class="s.scrollArea()">
+    <div v-else :class="s.scrollArea()">
       <div :class="s.contentInner()">
         <!-- Store meta section -->
         <section :class="s.section() + ' stagger-in'">
@@ -185,7 +220,12 @@ function handleSave(p: Parameters<typeof store.saveProduct>[0]) {
 
           <div :class="s.formGroup()">
             <label :class="s.label()">Фото / баннер магазина</label>
-            <UploadZone v-model="store.storeData.photo" />
+            <UploadZone
+              :modelValue="store.storeData.photo"
+              :uploading="bannerUploading"
+              @update:modelValue="(v) => (store.storeData.photo = v)"
+              @change="handleBannerUpload"
+            />
           </div>
 
           <div :class="s.formGroup()">
@@ -315,8 +355,8 @@ function handleSave(p: Parameters<typeof store.saveProduct>[0]) {
         </svg>
         Превью
       </button>
-      <button :class="s.publishBtn()" :disabled="publishing" @click="handlePublish">
-        <span v-if="publishing" :class="s.publishSpinner()" />
+      <button :class="s.publishBtn()" :disabled="store.saving" @click="handlePublish">
+        <span v-if="store.saving" :class="s.publishSpinner()" />
         <span v-else>Опубликовать</span>
       </button>
     </footer>
@@ -326,7 +366,6 @@ function handleSave(p: Parameters<typeof store.saveProduct>[0]) {
   <ProductFormDialog
     v-if="showModal"
     :product="editProduct"
-    @save="handleSave"
     @close="showModal = false; editProduct = null"
   />
 </template>
