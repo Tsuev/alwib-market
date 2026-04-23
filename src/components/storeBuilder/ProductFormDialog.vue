@@ -263,10 +263,7 @@ async function handlePhotoUpload(e: Event) {
               :max="5"
               separator=","
               :pt="{
-                root: {
-                  class:
-                    'flex flex-wrap gap-1.5 items-center px-2.5 py-2 border border-[var(--border-color)] rounded-[var(--radius)] min-h-[42px] bg-[var(--surface)] transition-[border-color,box-shadow] duration-[180ms] focus-within:border-[var(--accent)] focus-within:shadow-[0_0_0_3px_rgba(var(--accent-rgb),_0.12)]',
-                },
+
                 inputText: {
                   class:
                     'flex-1 min-w-[80px] border-none outline-none text-[13px] font-[inherit] bg-transparent text-[var(--text)] placeholder:text-[var(--text-sub)]',

@@ -26,9 +26,14 @@ function waLink() {
   return `https://wa.me/${phone}?text=${encodeURIComponent(contactMessage())}`
 }
 
-function tgLink() {
+const tgCopied = ref(false)
+
+async function openTelegram() {
+  await navigator.clipboard.writeText(contactMessage())
+  tgCopied.value = true
+  setTimeout(() => (tgCopied.value = false), 2000)
   const username = (props.telegram ?? '').replace(/^@/, '')
-  return `https://t.me/${username}`
+  window.open(`https://t.me/${username}`, '_blank', 'noopener')
 }
 
 const styles = tv({
@@ -40,7 +45,7 @@ const styles = tv({
     img: 'w-full h-full object-cover',
     badge: 'absolute top-2.5 right-2.5 bg-[#E85D47] text-white text-[13px] font-bold px-2.5 py-1 rounded-full',
     closeBtn: 'absolute top-3 right-3 z-10 w-8 h-8 flex items-center justify-center rounded-lg bg-[var(--surface)]/80 backdrop-blur-sm text-[var(--text-sub)] hover:bg-[var(--surface-alt)] transition-[background,color] duration-[180ms]',
-    info: 'p-7 pl-6 flex flex-col gap-3.5 overflow-y-auto max-h-[80vh]',
+    info: 'px-7 pt-5 pl-6 flex flex-col gap-3.5 overflow-y-auto max-h-[80vh]',
     tagsRow: 'flex gap-1.5 flex-wrap',
     tag: 'inline-flex items-center gap-1 px-2.5 py-[3px] bg-[rgba(var(--accent-rgb),_0.1)] text-[var(--accent)] rounded-full text-xs font-medium',
     name: 'text-[22px] font-extrabold text-[var(--text)] leading-snug',
@@ -49,7 +54,9 @@ const styles = tv({
     priceSale: 'font-bold text-[var(--accent)] text-[22px]',
     priceOrig: 'text-sm text-[var(--text-sub)] line-through',
     priceOnly: 'font-bold text-[22px] text-[var(--text)]',
-    contactRow: 'flex gap-2.5 mt-auto',
+    contactWrap: 'flex flex-col gap-2 mt-auto',
+    contactLabel: 'text-[11px] font-bold text-[var(--text-sub)] uppercase tracking-[.07em]',
+    contactRow: 'flex gap-2.5',
     waBtn: 'flex-1 flex items-center justify-center gap-2 py-3.5 text-[15px] font-bold bg-[#25D366] text-white rounded-[var(--btn-radius)] hover:opacity-85 active:scale-[0.98] transition-[opacity,transform] duration-[180ms]',
     tgBtn: 'flex-1 flex items-center justify-center gap-2 py-3.5 text-[15px] font-bold bg-[#229ED9] text-white rounded-[var(--btn-radius)] hover:opacity-85 active:scale-[0.98] transition-[opacity,transform] duration-[180ms]',
   },
@@ -111,7 +118,9 @@ function handleClose() {
           </template>
           <span v-else :class="s.priceOnly()">{{ formatRub(product.price) }}</span>
         </div>
-
+        
+        <div :class="s.contactWrap()">
+          <span :class="s.contactLabel()">Связаться</span>
         <div :class="s.contactRow()">
           <a
             v-if="props.whatsapp"
@@ -126,21 +135,20 @@ function handleClose() {
             </svg>
             WhatsApp
           </a>
-          <a
+          <button
             v-if="props.telegram"
-            :href="tgLink()"
-            target="_blank"
-            rel="noopener"
             :class="s.tgBtn()"
+            @click="openTelegram"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
               <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.19 13.067l-2.96-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.958.492z"/>
             </svg>
-            Telegram
-          </a>
+            {{ tgCopied ? 'Сообщение скопировано!' : 'Telegram' }}
+          </button>
           <button v-if="!props.whatsapp && !props.telegram" disabled class="flex-1 py-3.5 text-[15px] font-bold bg-(--surface-alt) text-(--text-sub) rounded-(--btn-radius) cursor-default">
             Связаться
           </button>
+        </div>
         </div>
       </div>
     </div>
