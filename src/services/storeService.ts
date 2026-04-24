@@ -1,5 +1,5 @@
 import { useSupabase } from '@/composables/useSupabase'
-import type { StoreData } from '@/types/types'
+import type { Plan, StoreData } from '@/types/types'
 
 const { supabase } = useSupabase()
 
@@ -13,6 +13,7 @@ interface DbStore {
   theme: string | null
   whatsapp: string | null
   telegram: string | null
+  plan: string | null
   created_at: string
 }
 
@@ -26,6 +27,7 @@ function fromDb(row: DbStore): StoreData & { id: number; theme: string } {
     theme: row.theme || 'minimal',
     whatsapp: row.whatsapp || null,
     telegram: row.telegram || null,
+    plan: (row.plan as Plan) || 'free',
   }
 }
 

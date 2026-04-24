@@ -187,9 +187,9 @@ const styles = tv({
       'absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-sub)] flex items-center p-[3px] transition-[color] duration-[180ms] hover:text-[var(--text)] fade-in cursor-pointer border-0 bg-transparent',
     tagRow: 'flex gap-1.5 overflow-x-auto pb-0.5',
     tagChip:
-      'px-3.5 py-[5px] rounded-full text-xs font-semibold border-[1.5px] border-[var(--border-color)] text-[var(--text-sub)] bg-transparent whitespace-nowrap transition-all duration-[180ms] hover:border-[var(--accent)] hover:text-[var(--accent)] hover:bg-[rgba(var(--accent-rgb),_0.06)] cursor-pointer',
+      'px-3.5 py-[5px] rounded-full text-xs font-semibold border-[1.5px] border-[var(--border-color)] text-[var(--text-sub)]  whitespace-nowrap transition-all duration-[180ms] hover:border-[var(--accent)] hover:text-[var(--accent)] hover:bg-[rgba(var(--accent-rgb),_0.06)] cursor-pointer',
     tagChipActive:
-      'border-[var(--accent)] bg-[var(--accent)] text-white hover:text-white hover:bg-[var(--accent)]',
+      'text-white hover:text-white hover:bg-[var(--accent)] bg-[var(--accent)] border-[var(--accent)]',
     main: 'max-w-[1100px] mx-auto px-6 py-7 pb-[60px]',
     grid: 'grid grid-store-cols gap-5',
     empty:

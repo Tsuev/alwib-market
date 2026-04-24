@@ -13,6 +13,8 @@ import { getSession } from '@/services/authServices'
 import UploadZone from '@/components/storeBuilder/UploadZone.vue'
 import AdminProductCard from '@/components/storeBuilder/AdminProductCard.vue'
 import ProductFormDialog from '@/components/storeBuilder/ProductFormDialog.vue'
+import PlanDialog from '@/components/storeBuilder/PlanDialog.vue'
+import { FREE_THEME_IDS } from '@/constants/constants'
 import type { Product } from '@/types/types'
 
 const router = useRouter()
@@ -24,6 +26,7 @@ const domainError = ref('')
 const contactError = ref('')
 const whatsappError = ref('')
 const showModal = ref(false)
+const showPlanDialog = ref(false)
 const editProduct = ref<Product | null>(null)
 const domainStatus = ref<'idle' | 'checking' | 'available' | 'taken'>('idle')
 const domainFocused = ref(false)
@@ -43,9 +46,7 @@ const styles = tv({
     themeTabs:
       'flex gap-[3px] bg-[var(--surface-alt)] rounded-[10px] p-[3px] overflow-x-auto transition-[background] duration-300',
     themeTab:
-      'flex items-center gap-1.5 px-[11px] py-[5px] rounded-[7px] text-xs font-medium text-[var(--text-sub)] transition-all duration-[180ms] whitespace-nowrap shrink-0 cursor-pointer border-0 bg-transparent',
-    themeTabActive:
-      'bg-[var(--surface)] text-[var(--text)] shadow-[0_1px_4px_rgba(0,0,0,0.1)]',
+      'flex items-center gap-1.5 px-[11px] py-[5px] rounded-[7px] text-xs font-medium transition-all duration-[180ms] whitespace-nowrap shrink-0 cursor-pointer border-0',
     themeDot: 'w-2 h-2 rounded-full shrink-0',
     loadingWrap: 'flex-1 flex items-center justify-center',
     loadingSpinner:
@@ -53,7 +54,7 @@ const styles = tv({
     scrollArea: 'flex-1 overflow-y-auto',
     contentInner: 'max-w-[900px] mx-auto px-8 py-8 pb-[120px]',
     section: 'mb-10',
-    sectionTitle: 'text-lg font-bold text-[var(--text)] mb-5',
+    sectionTitle: 'text-lg font-bold text-[var(--text)]',
     sectionHeader: 'flex items-center justify-between mb-5',
     countBadge:
       'inline-flex items-center justify-center min-w-5 h-5 px-1.5 bg-[rgba(var(--accent-rgb),_0.12)] text-[var(--accent)] rounded-full text-[11px] font-bold ml-2',
@@ -99,6 +100,13 @@ const styles = tv({
     copyBtn:
       'px-2.5 flex items-center self-stretch border-l border-[var(--border-color)] text-[var(--text-sub)] transition-[color,background] duration-[180ms] hover:bg-[var(--surface-alt)] hover:text-[var(--text)]',
     copyBtnDone: 'text-[#5b8c5a]',
+    planBadge:
+      'inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider border cursor-pointer transition-colors duration-150',
+    planBadgeFree:
+      'border-[var(--border-color)] text-[var(--text-sub)] bg-transparent hover:border-[var(--accent)] hover:text-[var(--accent)]',
+    planBadgePro:
+      'border-[var(--accent)] text-[var(--accent)] bg-[rgba(var(--accent-rgb),_0.08)] hover:bg-[rgba(var(--accent-rgb),_0.14)]',
+    lockedHint: 'text-[11px] text-[var(--text-sub)] mt-1.5 flex items-center gap-1',
   },
 })
 const { supabase } = useSupabase()
@@ -225,33 +233,28 @@ function openEdit(p: Product) {
     <header :class="s.topbar()">
       <div :class="s.topbarInner()">
         <div :class="s.brand()">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-            <rect x="2" y="3" width="20" height="14" rx="2" fill="var(--accent)" opacity=".15" />
-            <rect
-              x="2"
-              y="3"
-              width="20"
-              height="14"
-              rx="2"
-              stroke="var(--accent)"
-              stroke-width="1.5"
-            />
-            <path d="M8 21h8M12 17v4" stroke="var(--accent)" stroke-width="1.5" />
-          </svg>
+        <svg width="22" height="22" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <g fill="var(--accent)">
+            <path d="M17,28c2.209,0,4-1.791,4-4V0h-8v24C13,26.209,14.791,28,17,28z"/>
+            <path d="M53,24c0,2.209,1.791,4,4,4h4c1.312,0,2-0.687,2-2V4c0-2.211-1.789-4-4-4h-6V24z"/>
+            <path d="M27,28c2.209,0,4-1.791,4-4V0h-8v24C23,26.209,24.791,28,27,28z"/>
+            <path d="M7,28c2.209,0,4-1.791,4-4V0H5C2.789,0,1,1.789,1,4v22c0,1.313,0.812,2,2,2H7z"/>
+            <path d="M37,28c2.209,0,4-1.791,4-4V0h-8v24C33,26.209,34.791,28,37,28z"/>
+            <path d="M47,28c2.209,0,4-1.791,4-4V0h-8v24C43,26.209,44.791,28,47,28z"/>
+            <path d="M12,64h12V50h-1c-0.553,0-1-0.447-1-1s0.447-1,1-1h1V38H12V64z"/>
+            <path d="M30,56h22V38H30V56z M47.293,40.293c0.391-0.391,1.023-0.391,1.414,0l1,1c0.391,0.391,0.391,1.023,0,1.414C49.512,42.902,49.256,43,49,43s-0.512-0.098-0.707-0.293l-1-1C46.902,41.316,46.902,40.684,47.293,40.293z M42.293,40.293c0.391-0.391,1.023-0.391,1.414,0l6,6c0.391,0.391,0.391,1.023,0,1.414C49.512,47.902,49.256,48,49,48s-0.512-0.098-0.707-0.293l-6-6C41.902,41.316,41.902,40.684,42.293,40.293z"/>
+            <path d="M57,30c-2.088,0-3.926-1.068-5-2.687C50.926,28.932,49.088,30,47,30s-3.926-1.068-5-2.687C40.926,28.932,39.088,30,37,30s-3.926-1.068-5-2.687C30.926,28.932,29.088,30,27,30s-3.926-1.068-5-2.687C20.926,28.932,19.088,30,17,30s-3.926-1.068-5-2.687C10.926,28.932,9.088,30,7,30H4v30c0,2.211,1.789,4,4,4h2V37c0-0.553,0.447-1,1-1h14c0.553,0,1,0.447,1,1v27h30c2.211,0,4-1.789,4-4V30H57z M54,57c0,0.553-0.447,1-1,1H29c-0.553,0-1-0.447-1-1V37c0-0.553,0.447-1,1-1h24c0.553,0,1,0.447,1,1V57z"/>
+          </g>
+        </svg>
           <span>Онлайн Витрина</span>
         </div>
 
-        <div :class="s.themeTabs()">
-          <button
-            v-for="theme in THEMES"
-            :key="theme.id"
-            :class="[s.themeTab(), store.theme === theme.id && s.themeTabActive()]"
-            @click="store.setTheme(theme.id)"
-          >
-            <span :class="s.themeDot()" :style="{ background: theme['--accent'] }" />
-            {{ theme.name }}
-          </button>
-        </div>
+        <button
+          :class="[s.planBadge(), store.isPro ? s.planBadgePro() : s.planBadgeFree()]"
+          @click="showPlanDialog = true"
+        >
+          {{ store.isPro ? '✦ Pro' : 'Free' }}
+        </button>
       </div>
     </header>
 
@@ -266,6 +269,33 @@ function openEdit(p: Product) {
         <!-- Store meta section -->
         <section :class="s.section() + ' stagger-in'">
           <h2 :class="s.sectionTitle()">Оформление магазина</h2>
+
+          <div :class="s.formGroup()">
+            <label :class="s.label()">Тема</label>
+            <div :class="s.themeTabs()">
+              <button
+                v-for="theme in THEMES"
+                :key="theme.id"
+                :disabled="!store.isPro && !FREE_THEME_IDS.has(theme.id)"
+                :class="[
+                  s.themeTab(),
+                  store.theme === theme.id
+                    ? 'bg-(--surface) text-(--accent) shadow-[0_1px_4px_rgba(0,0,0,0.1)]'
+                    : 'bg-transparent text-(--text-sub)',
+                  !store.isPro && !FREE_THEME_IDS.has(theme.id) && 'opacity-35 cursor-not-allowed',
+                ]"
+                @click="!store.isPro && !FREE_THEME_IDS.has(theme.id) ? (showPlanDialog = true) : store.setTheme(theme.id)"
+              >
+                <span :class="s.themeDot()" :style="{ background: theme['--accent'] }" />
+                {{ theme.name }}
+              </button>
+            </div>
+            <p v-if="!store.isPro" :class="s.lockedHint()">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              Pro-темы доступны на тарифе
+              <button class="underline cursor-pointer bg-transparent border-0 p-0 text-[11px] text-(--text-sub) hover:text-(--accent)" @click="showPlanDialog = true">Pro</button>
+            </p>
+          </div>
 
           <div :class="s.formGroup()">
             <label :class="s.label()">Фото / баннер магазина</label>
@@ -366,13 +396,30 @@ function openEdit(p: Product) {
 
           <div :class="s.formGroup()">
             <label :class="s.label()">Telegram</label>
+            <div v-if="!store.isPro" class="relative">
+              <InputText
+                disabled
+                placeholder="@username"
+                :pt="{ root: { class: s.input() + ' opacity-40 cursor-not-allowed' } }"
+              />
+              <button
+                class="absolute inset-0 w-full cursor-pointer bg-transparent border-0"
+                @click="showPlanDialog = true"
+              />
+            </div>
             <InputText
+              v-else
               v-model="store.storeData.telegram"
               placeholder="@username"
               :pt="{ root: { class: s.input() } }"
               @input="contactError = ''"
             />
-            <div v-if="contactError" :class="s.fieldError() + ' fade-in'">{{ contactError }}</div>
+            <p v-if="!store.isPro" :class="s.lockedHint()">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              Доступно на тарифе
+              <button class="underline cursor-pointer bg-transparent border-0 p-0 text-[11px] text-(--text-sub) hover:text-(--accent)" @click="showPlanDialog = true">Pro</button>
+            </p>
+            <div v-else-if="contactError" :class="s.fieldError() + ' fade-in'">{{ contactError }}</div>
           </div>
         </section>
 
@@ -458,6 +505,9 @@ function openEdit(p: Product) {
     :product="editProduct"
     @close="showModal = false; editProduct = null"
   />
+
+  <!-- Plan modal -->
+  <PlanDialog v-if="showPlanDialog" @close="showPlanDialog = false" />
 </template>
 
 <style lang="scss" scoped>

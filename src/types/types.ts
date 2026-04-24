@@ -12,6 +12,8 @@ export interface Product {
   photo: string | null
 }
 
+export type Plan = 'free' | 'pro'
+
 export interface StoreData {
   id?: number // bigint from Supabase, undefined for unsaved stores
   name: string
@@ -20,6 +22,7 @@ export interface StoreData {
   photo: string | null
   whatsapp: string | null
   telegram: string | null
+  plan: Plan
 }
 
 export interface Theme {
