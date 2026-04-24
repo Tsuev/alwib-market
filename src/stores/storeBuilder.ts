@@ -8,15 +8,12 @@ import { loadProducts, saveProduct as dbSaveProduct, removeProduct } from '@/ser
 const DEFAULT_STORE: StoreData = { name: '', domain: '', description: '', photo: null, whatsapp: null, telegram: null }
 
 export const useStoreBuilderStore = defineStore('storeBuilder', () => {
-  // Theme is cached locally for instant UI — synced to DB on publish
-  const theme = ref(localStorage.getItem('sb_theme') || 'minimal')
+  const theme = ref('minimal')
   const storeData = ref<StoreData>({ ...DEFAULT_STORE })
   const products = ref<Product[]>([])
   const loading = ref(false)
   const saving = ref(false)
   const userId = ref<string | null>(null)
-
-  applyTheme(theme.value)
 
   async function loadData(uid: string): Promise<void> {
     userId.value = uid
@@ -27,7 +24,6 @@ export const useStoreBuilderStore = defineStore('storeBuilder', () => {
         const { theme: storeTheme, ...rest } = store
         storeData.value = rest
         theme.value = storeTheme
-        localStorage.setItem('sb_theme', storeTheme)
         applyTheme(storeTheme)
         products.value = await loadProducts(store.id)
       }
@@ -44,18 +40,16 @@ export const useStoreBuilderStore = defineStore('storeBuilder', () => {
       const { theme: savedTheme, ...rest } = saved
       storeData.value = rest
       theme.value = savedTheme
-      localStorage.setItem('sb_theme', savedTheme)
     } finally {
       saving.value = false
     }
   }
 
-  function setTheme(t: string): void {
+  async function setTheme(t: string): Promise<void> {
     theme.value = t
-    localStorage.setItem('sb_theme', t)
     applyTheme(t)
     if (storeData.value.id) {
-      dbUpdateTheme(storeData.value.id, t).catch(() => {/* fire-and-forget, fails silently */})
+      await dbUpdateTheme(storeData.value.id, t)
     }
   }
 

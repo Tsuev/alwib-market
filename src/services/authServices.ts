@@ -40,6 +40,13 @@ export async function signInWithGoogle() {
   return { error: error ? mapAuthError(error.message) : null }
 }
 
+export async function resetPassword(email: string) {
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${window.location.origin}/auth`,
+  })
+  return { error: error ? mapAuthError(error.message) : null }
+}
+
 export async function getSession() {
   const { data } = await supabase.auth.getSession()
   return data.session

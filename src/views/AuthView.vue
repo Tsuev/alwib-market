@@ -2,9 +2,9 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { tv } from 'tailwind-variants'
-import { signIn, signUp, signInWithGoogle } from '@/services/authServices'
+import { signIn, signUp, signInWithGoogle, resetPassword } from '@/services/authServices'
 
-type Mode = 'login' | 'register'
+type Mode = 'login' | 'register' | 'forgot'
 
 const router = useRouter()
 
@@ -87,6 +87,21 @@ async function handleGoogle() {
   const res = await signInWithGoogle()
   googleLoading.value = false
   if (res.error) error.value = res.error
+}
+
+async function handleForgot() {
+  const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!email.value.trim()) { error.value = 'Введите email'; return }
+  if (!emailRe.test(email.value.trim())) { error.value = 'Некорректный формат email'; return }
+  error.value = ''
+  loading.value = true
+  try {
+    const res = await resetPassword(email.value.trim())
+    if (res.error) { error.value = res.error; return }
+    success.value = true
+  } finally {
+    loading.value = false
+  }
 }
 
 function switchMode(m: Mode) {
@@ -329,9 +344,11 @@ const s = styles()
             </svg>
           </div>
           <div :class="s.successTitle()">
-            {{ mode === 'login' ? 'Вход выполнен!' : 'Аккаунт создан!' }}
+            {{ mode === 'forgot' ? 'Письмо отправлено!' : mode === 'login' ? 'Вход выполнен!' : 'Аккаунт создан!' }}
           </div>
-          <div :class="s.successSub()">Добро пожаловать в панель управления</div>
+          <div :class="s.successSub()">
+            {{ mode === 'forgot' ? 'Проверьте почту и перейдите по ссылке для сброса пароля' : 'Добро пожаловать в панель управления' }}
+          </div>
         </div>
 
         <!-- Form state -->
@@ -339,7 +356,7 @@ const s = styles()
           <!-- Header -->
           <div :class="s.formHeader()" style="animation: fadeUp 300ms ease both">
             <h2 :class="s.formTitle()">
-              {{ mode === 'login' ? 'Войдите в аккаунт' : 'Создайте аккаунт' }}
+              {{ mode === 'forgot' ? 'Сброс пароля' : mode === 'login' ? 'Войдите в аккаунт' : 'Создайте аккаунт' }}
             </h2>
             <p :class="s.formSub()">
               <template v-if="mode === 'login'">
@@ -348,8 +365,12 @@ const s = styles()
                   Зарегистрироваться
                 </span>
               </template>
-              <template v-else>
+              <template v-else-if="mode === 'register'">
                 Уже есть аккаунт?
+                <span :class="s.formSubLink()" @click="switchMode('login')">Войти</span>
+              </template>
+              <template v-else>
+                Вспомнили пароль?
                 <span :class="s.formSubLink()" @click="switchMode('login')">Войти</span>
               </template>
             </p>
@@ -411,7 +432,7 @@ const s = styles()
           </div>
 
           <!-- Password field -->
-          <div :class="s.fieldWrap()" style="animation: fadeUp 350ms 80ms ease both">
+          <div v-if="mode !== 'forgot'" :class="s.fieldWrap()" style="animation: fadeUp 350ms 80ms ease both">
             <label :class="s.label()">Пароль</label>
             <div
               :class="[
@@ -575,23 +596,29 @@ const s = styles()
               box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35);
               animation: fadeUp 350ms 120ms ease both;
             "
-            @click="handleSubmit"
+            @click="mode === 'forgot' ? handleForgot() : handleSubmit()"
           >
             <span v-if="loading" :class="s.spinner()" />
             <template v-else>
-              {{ mode === 'login' ? 'Войти →' : 'Создать аккаунт →' }}
+              {{ mode === 'forgot' ? 'Отправить письмо →' : mode === 'login' ? 'Войти →' : 'Создать аккаунт →' }}
             </template>
           </button>
 
-          <!-- Divider -->
-          <div :class="s.divider()" style="animation: fadeUp 350ms 160ms ease both">
+          <!-- Forgot password link (login mode only) -->
+          <div v-if="mode === 'login'" style="text-align: center; margin-top: -8px; margin-bottom: 12px; animation: fadeUp 350ms 140ms ease both">
+            <span :class="s.formSubLink()" @click="switchMode('forgot')">Забыли пароль?</span>
+          </div>
+
+          <!-- Divider (not shown in forgot mode) -->
+          <div v-if="mode !== 'forgot'" :class="s.divider()" style="animation: fadeUp 350ms 160ms ease both">
             <div :class="s.dividerLine()" />
             <span :class="s.dividerText()">или</span>
             <div :class="s.dividerLine()" />
           </div>
 
-          <!-- Google button -->
+          <!-- Google button (not shown in forgot mode) -->
           <button
+            v-if="mode !== 'forgot'"
             :class="s.googleBtn()"
             :disabled="googleLoading"
             style="animation: fadeUp 350ms 200ms ease both"

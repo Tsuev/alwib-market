@@ -18,7 +18,6 @@
     "@supabase/supabase-js": "^2.49.4",
     "@tailwindcss/vite": "^4.0.17",
     "@vueuse/core": "^13.0.0",
-    "axios": "^1.8.4",
     "pinia": "^3.0.1",
     "primevue": "^4.3.3",
     "tailwind-merge": "^3.5.0",

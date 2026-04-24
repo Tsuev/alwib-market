@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { refDebounced } from '@vueuse/core'
 import { useRouter } from 'vue-router'
 import { tv } from 'tailwind-variants'
 import { useStoreBuilderStore } from '@/stores/storeBuilder'
@@ -84,11 +85,14 @@ const displayProducts = computed(() =>
 
 const ready = ref(false)
 const search = ref('')
+const debouncedSearch = refDebounced(search, 300)
 const activeTag = ref<string | null>(null)
 const selectedProduct = ref<Product | null>(null)
 const scrollRef = ref<HTMLElement | null>(null)
 const sticky = ref(false)
 const showTop = ref(false)
+
+let observer: IntersectionObserver | null = null
 
 onMounted(async () => {
   if (props.slug) {
@@ -110,12 +114,26 @@ onMounted(async () => {
       ready.value = true
     }
   }
+
+  observer = new IntersectionObserver(
+    (entries) => {
+      if (entries[0].isIntersecting && hasMore.value) {
+        visibleCount.value += PAGE_SIZE
+      }
+    },
+    { root: scrollRef.value, rootMargin: '200px' },
+  )
+  if (sentinelRef.value) observer.observe(sentinelRef.value)
+})
+
+onUnmounted(() => {
+  observer?.disconnect()
 })
 
 const allTags = computed(() => [...new Set(displayProducts.value.flatMap((p) => p.tags))])
 
 const filtered = computed(() => {
-  const q = search.value.toLowerCase()
+  const q = debouncedSearch.value.toLowerCase()
   return displayProducts.value.filter((p) => {
     const matchSearch =
       !q ||
@@ -126,6 +144,14 @@ const filtered = computed(() => {
     return matchSearch && matchTag
   })
 })
+
+const PAGE_SIZE = 16
+const visibleCount = ref(PAGE_SIZE)
+const visibleProducts = computed(() => filtered.value.slice(0, visibleCount.value))
+const hasMore = computed(() => visibleCount.value < filtered.value.length)
+const sentinelRef = ref<HTMLElement | null>(null)
+
+watch(filtered, () => { visibleCount.value = PAGE_SIZE })
 
 function onScroll() {
   const el = scrollRef.value
@@ -308,13 +334,15 @@ const s = styles()
 
       <div v-else :class="s.grid()">
         <StoreProductCard
-          v-for="(product, i) in filtered"
+          v-for="(product, i) in visibleProducts"
           :key="product.id"
           :product="product"
           :animIdx="i"
           @click="selectedProduct = product"
         />
       </div>
+
+      <div ref="sentinelRef" style="height: 1px" />
     </div>
 
     <!-- Scroll to top -->

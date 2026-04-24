@@ -5,6 +5,7 @@ import { tv } from 'tailwind-variants'
 import InputText from 'primevue/inputtext'
 import InputMask from 'primevue/inputmask'
 import { useToast } from 'primevue/usetoast'
+import { useSupabase } from '@/composables/useSupabase'
 import { useStoreBuilderStore } from '@/stores/storeBuilder'
 import { THEMES } from '@/constants/constants'
 import { uploadPhoto } from '@/composables/useStorageUpload'
@@ -29,8 +30,6 @@ const domainFocused = ref(false)
 const bannerUploading = ref(false)
 const copied = ref(false)
 let domainTimer: ReturnType<typeof setTimeout> | null = null
-
-const TAKEN_SLUGS = ['test', 'admin', 'store', 'shop', 'market', 'alwib']
 
 const styles = tv({
   slots: {
@@ -102,6 +101,7 @@ const styles = tv({
     copyBtnDone: 'text-[#5b8c5a]',
   },
 })
+const { supabase } = useSupabase()
 
 const s = styles()
 
@@ -141,8 +141,15 @@ function handleDomainInput(e: Event) {
     domainStatus.value = 'idle'
     return
   }
-  domainTimer = setTimeout(() => {
-    domainStatus.value = TAKEN_SLUGS.includes(clean) ? 'taken' : 'available'
+  domainTimer = setTimeout(async () => {
+    const { data, error } = await supabase.functions.invoke('check-slug', {
+      body: { slug: clean },
+    })
+    if (error || !data) {
+      domainStatus.value = 'idle'
+      return
+    }
+    domainStatus.value = data.available ? 'available' : 'taken'
   }, 600)
 }
 
