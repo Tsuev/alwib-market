@@ -512,7 +512,7 @@ const s = styles()
             </div>
           </div>
 
-          <!-- Confirm password (register only) -->
+          <!-- Confirm password -->
           <div
             v-if="mode === 'register'"
             :class="s.fieldWrap()"
