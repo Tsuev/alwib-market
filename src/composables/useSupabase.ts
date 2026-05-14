@@ -1,4 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/types/supabase'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
@@ -8,14 +10,14 @@ if (!supabaseUrl || !supabaseKey) {
 }
 
 type GlobalWithSupabase = typeof globalThis & {
-  __supabaseClient?: ReturnType<typeof createClient>
+  __supabaseClient?: SupabaseClient<Database>
 }
 
 const globalWithSupabase = globalThis as GlobalWithSupabase
 
 const supabase =
   globalWithSupabase.__supabaseClient ??
-  createClient(supabaseUrl, supabaseKey)
+  createClient<Database>(supabaseUrl, supabaseKey)
 
 globalWithSupabase.__supabaseClient = supabase
 
