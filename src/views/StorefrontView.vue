@@ -165,14 +165,18 @@ const styles = tv({
     wrap: 'relative h-screen overflow-y-auto bg-[var(--bg)] transition-[background] duration-300',
     backBtn:
       'fixed top-4 left-4 z-[100] flex items-center gap-1.5 px-3.5 py-2 bg-[var(--surface)] border border-[var(--border-color)] rounded-full text-[13px] font-semibold text-[var(--text)] shadow-[0_2px_12px_rgba(0,0,0,0.1)] transition-all duration-[180ms] hover:shadow-[0_4px_16px_rgba(0,0,0,0.15)] stagger-in cursor-pointer',
-    banner: 'relative h-[240px] overflow-hidden bg-[var(--surface-alt)]',
-    bannerImg: 'w-full h-full object-contain',
-    bannerPlaceholder:
-      'w-full h-full bg-gradient-to-br from-[rgba(var(--accent-rgb),_0.15)] to-[rgba(var(--accent-rgb),_0.04)]',
+    banner:
+      'relative min-h-[240px] overflow-hidden bg-gradient-to-br from-[rgba(var(--accent-rgb),_0.2)] to-[rgba(var(--accent-rgb),_0.05)]',
     bannerOverlay:
-      'absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex flex-col justify-end px-8 pb-7',
-    bannerTitle: 'text-[32px] font-extrabold text-white [text-shadow:0_1px_4px_rgba(0,0,0,0.3)] stagger-in',
-    bannerDomain: 'text-[13px] text-white/70 mt-1 stagger-in',
+      'absolute inset-0 bg-gradient-to-t from-black/40 to-transparent flex items-end px-6 sm:px-8 pb-7',
+    bannerHead: 'flex flex-col sm:flex-row sm:items-end gap-4 sm:gap-5',
+    logoFrame:
+      'w-[96px] h-[96px] sm:w-[116px] sm:h-[116px] rounded-full border border-white/35 bg-white/90 shadow-[0_12px_36px_rgba(0,0,0,0.22)] overflow-hidden shrink-0',
+    logoImg: 'w-full h-full object-cover',
+    logoPlaceholder:
+      'w-full h-full bg-white/80 text-[var(--accent)] text-2xl font-black flex items-center justify-center',
+    bannerTitle: 'text-[26px] sm:text-[32px] font-extrabold text-white [text-shadow:0_1px_4px_rgba(0,0,0,0.3)] stagger-in',
+    bannerDomain: 'text-[13px] text-white/80 mt-1 stagger-in',
     stickyBar:
       'sticky top-0 z-50 bg-[var(--bg)] border-b border-transparent transition-[background,border-color,backdrop-filter] duration-200',
     stickyBarScrolled:
@@ -242,19 +246,27 @@ const s = styles()
       Вернуться к редактору
     </button>
 
-    <!-- Banner -->
+    <!-- Store header -->
     <div :class="s.banner()">
-      <img
-        v-if="displayPhoto"
-        :src="displayPhoto"
-        alt="banner"
-        :class="s.bannerImg()"
-      />
-      <div v-else :class="s.bannerPlaceholder()" />
       <div :class="s.bannerOverlay()">
-        <h1 :class="s.bannerTitle()">{{ displayName || 'Мой магазин' }}</h1>
-        <div v-if="displayDomain" :class="s.bannerDomain()">
-          alwib.ru/{{ displayDomain }}
+        <div :class="s.bannerHead()">
+          <div :class="s.logoFrame()">
+            <img
+              v-if="displayPhoto"
+              :src="displayPhoto"
+              alt="Логотип магазина"
+              :class="s.logoImg()"
+            />
+            <div v-else :class="s.logoPlaceholder()">
+              {{ (displayName || 'М').slice(0, 1).toUpperCase() }}
+            </div>
+          </div>
+          <div>
+            <h1 :class="s.bannerTitle()">{{ displayName || 'Мой магазин' }}</h1>
+            <div v-if="displayDomain" :class="s.bannerDomain()">
+              alwib.ru/{{ displayDomain }}
+            </div>
+          </div>
         </div>
       </div>
     </div>

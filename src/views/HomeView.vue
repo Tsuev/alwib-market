@@ -59,6 +59,7 @@ const styles = tv({
     countBadge:
       'inline-flex items-center justify-center min-w-5 h-5 px-1.5 bg-[rgba(var(--accent-rgb),_0.12)] text-[var(--accent)] rounded-full text-[11px] font-bold ml-2',
     formGroup: 'mb-5',
+    storeLogo: 'flex justify-center',
     label:
       'block text-[11px] font-bold text-[var(--text-sub)] uppercase tracking-[.07em] mb-2',
     input:
@@ -126,6 +127,7 @@ async function handleBannerUpload(file: File) {
   bannerUploading.value = true
   try {
     store.storeData.photo = await uploadPhoto(file, session.user.id, 'store')
+    await store.publishStore()
   } catch (err) {
     toast.add({
       severity: 'error',
@@ -135,6 +137,20 @@ async function handleBannerUpload(file: File) {
     })
   } finally {
     bannerUploading.value = false
+  }
+}
+
+async function handleStorePhotoChange(value: string | null) {
+  store.storeData.photo = value
+  try {
+    await store.publishStore()
+  } catch (err) {
+    toast.add({
+      severity: 'error',
+      summary: 'Ошибка сохранения',
+      detail: err instanceof Error ? err.message : 'Не удалось сохранить фото магазина',
+      life: 4000,
+    })
   }
 }
 
@@ -150,15 +166,25 @@ function handleDomainInput(e: Event) {
     return
   }
   domainTimer = setTimeout(async () => {
-    const { data, error } = await supabase.functions.invoke('check-slug', {
-      body: { slug: clean },
-    })
-    if (error || !data) {
+    const available = await checkSlugAvailable(clean)
+    if (available === null) {
       domainStatus.value = 'idle'
       return
     }
-    domainStatus.value = data.available ? 'available' : 'taken'
+    domainStatus.value = available ? 'available' : 'taken'
   }, 600)
+}
+
+async function checkSlugAvailable(slug: string): Promise<boolean | null> {
+  const { data, error } = await supabase.functions.invoke('check-slug', {
+    body: { slug },
+  })
+
+  if (error || !data || typeof data.available !== 'boolean') {
+    return null
+  }
+
+  return data.available
 }
 
 function validateWhatsapp(val: string | null): boolean {
@@ -191,6 +217,20 @@ async function handlePublish() {
   }
 
   if (hasError) return
+
+  const cleanSlug = store.storeData.domain.trim().toLowerCase()
+  const available = await checkSlugAvailable(cleanSlug)
+  if (available === false) {
+    domainStatus.value = 'taken'
+    domainError.value = 'Занят, попробуйте другой'
+    return
+  }
+  if (available === null) {
+    domainStatus.value = 'idle'
+    domainError.value = 'Не удалось проверить домен, попробуйте снова'
+    return
+  }
+
   try {
     await store.publishStore()
     toast.add({
@@ -298,13 +338,15 @@ function openEdit(p: Product) {
           </div>
 
           <div :class="s.formGroup()">
-            <label :class="s.label()">Фото / баннер магазина</label>
+            <label :class="[s.label(), 'flex justify-center']">Логотип магазина</label>
+            <div :class="s.storeLogo()">
             <UploadZone
               :modelValue="store.storeData.photo"
               :uploading="bannerUploading"
-              @update:modelValue="(v) => (store.storeData.photo = v)"
+              @update:modelValue="handleStorePhotoChange"
               @change="handleBannerUpload"
             />
+            </div>
           </div>
 
           <div :class="s.formGroup()">
@@ -338,7 +380,7 @@ function openEdit(p: Product) {
               <span :class="s.domainPrefix()">alwib.ru/</span>
               <input
                 :class="s.domainInput()"
-                placeholder="your-shop"
+                placeholder="Название магазина на Английском языке"
                 :value="store.storeData.domain"
                 @input="handleDomainInput"
                 @focus="domainFocused = true"

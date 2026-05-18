@@ -14,16 +14,16 @@ const fileInput = ref<HTMLInputElement | null>(null)
 
 const styles = tv({
   slots: {
-    root: 'border-2 border-dashed border-[var(--border-color)] rounded-[var(--radius)] overflow-hidden cursor-pointer transition-[border-color,background] duration-200',
+    root: 'border-2 border-dashed border-[var(--border-color)] rounded-[var(--radius)] overflow-hidden cursor-pointer transition-[border-color,background] duration-200 aspect-square w-full max-w-[320px] bg-[var(--surface)]',
     rootDragging: 'border-[var(--accent)] bg-[rgba(var(--accent-rgb),_0.04)]',
     rootHovering: 'border-[var(--accent)] bg-[rgba(var(--accent-rgb),_0.04)]',
     rootHasPhoto: 'border-solid cursor-default',
-    placeholder: 'flex flex-col items-center justify-center gap-2 py-9 px-5 text-[var(--text-sub)] text-center',
+    placeholder: 'h-full flex flex-col items-center justify-center gap-2 py-9 px-5 text-[var(--text-sub)] text-center',
     placeholderText: 'text-sm font-medium',
     placeholderAccent: 'text-[var(--accent)]',
     placeholderSmall: 'text-xs opacity-70',
-    preview: 'relative bg-black/50',
-    previewImg: 'w-full h-[200px] object-contain block',
+    preview: 'relative h-full bg-[var(--surface-alt)] rounded-full overflow-hidden',
+    previewImg: 'w-full h-full object-cover block',
     removeBtn:
       'absolute top-2.5 right-2.5 w-7 h-7 rounded-full bg-black/60 text-white text-base flex items-center justify-center opacity-0 transition-opacity duration-[180ms] hover:opacity-100',
     removeBtnVisible: 'opacity-100',
@@ -120,10 +120,10 @@ function onDrop(e: DragEvent) {
           <polyline points="21 15 16 10 5 21" />
         </svg>
         <p :class="placeholderText()">
-          Перетащите фото или
+          Загрузите логотип 1:1 или
           <span :class="placeholderAccent()">выберите файл</span>
         </p>
-        <small :class="placeholderSmall()">JPG, PNG, WebP · до 5 MB</small>
+        <small :class="placeholderSmall()">JPG, PNG, WebP · квадрат лучше всего · до 5 MB</small>
       </template>
     </div>
   </div>

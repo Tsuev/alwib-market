@@ -11,7 +11,8 @@ const styles = tv({
   slots: {
     root: 'fixed inset-0 z-[9999] bg-[var(--surface)] flex flex-col items-center justify-center gap-5 transition-opacity duration-500',
     rootFading: 'opacity-0 pointer-events-none',
-    logo: 'max-w-[120px] max-h-20 object-contain stagger-in rounded-[var(--radius)]',
+    logo:
+      'w-24 h-24 object-cover stagger-in rounded-full overflow-hidden border border-[var(--border-color)]',
     storeName: 'text-[28px] font-extrabold text-[var(--text)] stagger-in',
     spinnerWrap: 'fade-in',
     ring: 'w-8 h-8 border-[2.5px] border-[rgba(var(--accent-rgb),_0.2)] border-t-[var(--accent)] rounded-full spin-anim',
