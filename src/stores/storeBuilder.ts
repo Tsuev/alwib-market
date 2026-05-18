@@ -19,14 +19,18 @@ export const useStoreBuilderStore = defineStore('storeBuilder', () => {
     userId.value = uid
     loading.value = true
     try {
-      const store = await loadStore(uid)
-      if (store) {
-        const { theme: storeTheme, ...rest } = store
-        storeData.value = rest
-        theme.value = storeTheme
-        applyTheme(storeTheme)
-        products.value = await loadProducts(store.id)
+      let store = await loadStore(uid)
+
+      // First login after email confirmation: create an empty store automatically.
+      if (!store) {
+        store = await dbSaveStore({ ...DEFAULT_STORE }, uid, theme.value)
       }
+
+      const { theme: storeTheme, ...rest } = store
+      storeData.value = rest
+      theme.value = storeTheme
+      applyTheme(storeTheme)
+      products.value = await loadProducts(store.id)
     } finally {
       loading.value = false
     }

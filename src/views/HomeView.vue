@@ -177,7 +177,10 @@ function handleDomainInput(e: Event) {
 
 async function checkSlugAvailable(slug: string): Promise<boolean | null> {
   const { data, error } = await supabase.functions.invoke('check-slug', {
-    body: { slug },
+    body: {
+      slug,
+      currentStoreId: store.storeData.id ?? null,
+    },
   })
 
   if (error || !data || typeof data.available !== 'boolean') {
