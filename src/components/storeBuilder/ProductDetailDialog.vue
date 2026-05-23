@@ -38,17 +38,17 @@ async function openTelegram() {
 
 const styles = tv({
   slots: {
-    overlay: 'bg-black/50',
-    box: 'bg-[var(--surface)] rounded-[calc(var(--radius)+4px)] w-full max-w-[780px] shadow-[0_20px_60px_rgba(0,0,0,0.2)] transition-[background] duration-300 relative overflow-hidden',
-    inner: 'grid grid-cols-2',
-    imgWrap: 'relative aspect-square overflow-hidden bg-[var(--surface-alt)]',
+    overlay: 'bg-black/50 p-2 sm:p-4 items-start sm:items-center',
+    box: 'bg-[var(--surface)] rounded-[calc(var(--radius)+4px)] max-sm:rounded-[var(--radius)] w-full max-w-[780px] max-h-[calc(100dvh-1rem)] sm:max-h-[90vh] shadow-[0_20px_60px_rgba(0,0,0,0.2)] transition-[background] duration-300 relative overflow-hidden',
+    inner: 'grid grid-cols-1 sm:grid-cols-2',
+    imgWrap: 'relative aspect-[16/9] sm:aspect-square overflow-hidden bg-[var(--surface-alt)]',
     img: 'w-full h-full object-cover',
     badge: 'absolute top-2.5 right-2.5 bg-[#E85D47] text-white text-[13px] font-bold px-2.5 py-1 rounded-full',
     closeBtn: 'absolute top-3 right-3 z-10 w-8 h-8 flex items-center justify-center rounded-lg bg-[var(--surface)]/80 backdrop-blur-sm text-[var(--text-sub)] hover:bg-[var(--surface-alt)] transition-[background,color] duration-[180ms]',
-    info: 'px-7 pt-5 pl-6 flex flex-col gap-3.5 overflow-y-auto max-h-[80vh]',
+    info: 'px-4 sm:px-7 pt-4 sm:pt-5 pb-4 sm:pb-5 sm:pl-6 flex flex-col gap-3 sm:gap-3.5 overflow-y-auto max-h-[calc(100dvh-1rem)] sm:max-h-[80vh]',
     tagsRow: 'flex gap-1.5 flex-wrap',
     tag: 'inline-flex items-center gap-1 px-2.5 py-[3px] bg-[rgba(var(--accent-rgb),_0.1)] text-[var(--accent)] rounded-full text-xs font-medium',
-    name: 'text-[22px] font-extrabold text-[var(--text)] leading-snug',
+    name: 'text-[20px] sm:text-[22px] font-extrabold text-[var(--text)] leading-snug',
     desc: 'text-sm text-[var(--text-sub)] leading-[1.7]',
     priceRow: 'flex items-baseline gap-2.5',
     priceSale: 'font-bold text-[var(--accent)] text-[22px]',
@@ -56,9 +56,9 @@ const styles = tv({
     priceOnly: 'font-bold text-[22px] text-[var(--text)]',
     contactWrap: 'flex flex-col gap-2 mt-auto',
     contactLabel: 'text-[11px] font-bold text-[var(--text-sub)] uppercase tracking-[.07em]',
-    contactRow: 'flex gap-2.5',
-    waBtn: 'flex-1 flex items-center justify-center gap-2 py-3.5 text-[15px] font-bold bg-[#25D366] text-white rounded-[var(--btn-radius)] hover:opacity-85 active:scale-[0.98] transition-[opacity,transform] duration-[180ms]',
-    tgBtn: 'flex-1 flex items-center justify-center gap-2 py-3.5 text-[15px] font-bold bg-[#229ED9] text-white rounded-[var(--btn-radius)] hover:opacity-85 active:scale-[0.98] transition-[opacity,transform] duration-[180ms]',
+    contactRow: 'flex flex-col sm:flex-row gap-2.5',
+    waBtn: 'flex-1 flex items-center justify-center gap-2 py-3 sm:py-3.5 text-[15px] font-bold bg-[#25D366] text-white rounded-[var(--btn-radius)] hover:opacity-85 active:scale-[0.98] transition-[opacity,transform] duration-[180ms]',
+    tgBtn: 'flex-1 flex items-center justify-center gap-2 py-3 sm:py-3.5 text-[15px] font-bold bg-[#229ED9] text-white rounded-[var(--btn-radius)] hover:opacity-85 active:scale-[0.98] transition-[opacity,transform] duration-[180ms]',
   },
 })
 
@@ -154,12 +154,3 @@ function handleClose() {
     </div>
   </Dialog>
 </template>
-
-<style lang="scss" scoped>
-@media (max-width: 640px) {
-  :deep(.p-dialog) {
-    .grid { grid-template-columns: 1fr; }
-    .aspect-square { aspect-ratio: 16/9; }
-  }
-}
-</style>

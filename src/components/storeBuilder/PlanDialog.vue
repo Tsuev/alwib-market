@@ -8,13 +8,13 @@ const store = useStoreBuilderStore()
 
 const s = tv({
   slots: {
-    overlay: 'fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4',
-    dialog: 'w-full max-w-[580px] bg-[var(--surface)] rounded-[var(--radius)] shadow-2xl overflow-hidden',
-    header: 'px-6 pt-6 pb-4 border-b border-[var(--border-color)]',
+    overlay: 'fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-black/50 backdrop-blur-sm p-3 sm:p-4 overflow-y-auto',
+    dialog: 'w-full max-w-[580px] bg-[var(--surface)] rounded-[var(--radius)] shadow-2xl overflow-hidden max-h-[calc(100dvh-1.5rem)] sm:max-h-[90vh]',
+    header: 'px-4 sm:px-6 pt-5 sm:pt-6 pb-4 border-b border-[var(--border-color)]',
     title: 'text-[18px] font-bold text-[var(--text)]',
     subtitle: 'text-sm text-[var(--text-sub)] mt-0.5',
-    closeBtn: 'absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full text-[var(--text-sub)] hover:bg-[var(--surface-alt)] hover:text-[var(--text)] transition-colors border-0 bg-transparent cursor-pointer',
-    body: 'p-6 grid grid-cols-2 gap-4',
+    closeBtn: 'absolute top-3 sm:top-4 right-3 sm:right-4 w-8 h-8 flex items-center justify-center rounded-full text-[var(--text-sub)] hover:bg-[var(--surface-alt)] hover:text-[var(--text)] transition-colors border-0 bg-transparent cursor-pointer',
+    body: 'p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 gap-4 overflow-y-auto',
     card: 'relative rounded-[var(--radius)] border-2 p-5 flex flex-col gap-4 transition-all duration-200',
     cardFree: 'border-[var(--border-color)] bg-[var(--surface-alt)]',
     cardPro: 'border-[var(--accent)] bg-[rgba(var(--accent-rgb),_0.04)]',
