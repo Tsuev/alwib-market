@@ -19,6 +19,12 @@ Create a `.env` file with:
 - `VITE_SUPABASE_ANON_KEY` — Supabase anon key
 - `VITE_SUPABASE_PUBLISHABLE_KEY` — Supabase publishable key
 - `VITE_API_BASE_URL` — Base URL for the axios HTTP client
+- `YOOKASSA_TEST_SHOP_ID` — YooKassa test shop ID
+- `YOOKASSA_TEST_SECRET_KEY` — YooKassa test secret key
+- `YOOKASSA_PROD_SHOP_ID` — YooKassa production shop ID
+- `YOOKASSA_PROD_SECRET_KEY` — YooKassa production secret key
+- `YOOKASSA_RETURN_URL` — URL for redirect after payment
+- `YOOKASSA_WEBHOOK_URL` — public webhook endpoint URL
 
 ## Architecture
 

@@ -9,7 +9,7 @@ import { useSupabase } from '@/composables/useSupabase'
 import { useStoreBuilderStore } from '@/stores/storeBuilder'
 import { THEMES } from '@/constants/constants'
 import { uploadPhoto } from '@/composables/useStorageUpload'
-import { getSession } from '@/services/authServices'
+import { getSession, signOut } from '@/services/authServices'
 import UploadZone from '@/components/storeBuilder/UploadZone.vue'
 import AdminProductCard from '@/components/storeBuilder/AdminProductCard.vue'
 import ProductFormDialog from '@/components/storeBuilder/ProductFormDialog.vue'
@@ -32,6 +32,7 @@ const domainStatus = ref<'idle' | 'checking' | 'available' | 'taken'>('idle')
 const domainFocused = ref(false)
 const bannerUploading = ref(false)
 const copied = ref(false)
+const userEmailLabel = ref('')
 let domainTimer: ReturnType<typeof setTimeout> | null = null
 
 const styles = tv({
@@ -44,8 +45,12 @@ const styles = tv({
     brand:
       'flex items-center gap-2.5 font-bold text-[15px] text-[var(--text)] shrink-0',
     topbarActions: 'flex items-center gap-2 shrink-0',
+    userBadge:
+      'inline-flex items-center px-3 py-1.5 rounded-[var(--btn-radius)] text-xs font-semibold text-[var(--text)] bg-[var(--surface-alt)] border border-[var(--border-color)] max-w-[220px] truncate transition-[background,border-color] duration-300',
     supportLink:
       'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--btn-radius)] text-xs font-semibold text-[var(--text-sub)] hover:text-[var(--accent)] hover:bg-[var(--surface-alt)] transition-[color,background] duration-[180ms]',
+    logoutBtn:
+      'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--btn-radius)] text-xs font-semibold text-[var(--text-sub)] hover:text-[#E85D47] hover:bg-[#E85D4712] transition-[color,background] duration-[180ms] border-0 bg-transparent cursor-pointer',
     themeTabs:
       'flex gap-[3px] bg-[var(--surface-alt)] rounded-[10px] p-[3px] overflow-x-auto transition-[background] duration-300',
     themeTab:
@@ -120,6 +125,7 @@ const s = styles()
 onMounted(async () => {
   const session = await getSession()
   if (session) {
+    userEmailLabel.value = session.user.email?.split('@')[0] || session.user.email || ''
     await store.loadData(session.user.id)
   }
 })
@@ -271,6 +277,11 @@ function openEdit(p: Product) {
   editProduct.value = p
   showModal.value = true
 }
+
+async function handleSignOut() {
+  await signOut()
+  await router.push('/auth')
+}
 </script>
 
 <template>
@@ -284,6 +295,9 @@ function openEdit(p: Product) {
         </div>
 
         <div :class="s.topbarActions()">
+          <span v-if="userEmailLabel" :class="s.userBadge()" :title="userEmailLabel">
+            {{ userEmailLabel }}
+          </span>
           <a
             :class="s.supportLink()"
             href="https://t.me/Qarimansur"
@@ -301,6 +315,15 @@ function openEdit(p: Product) {
           >
             {{ store.isPro ? '✦ Pro' : 'Free' }}
           </button>
+          <button :class="s.logoutBtn()" @click="handleSignOut">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <polyline points="16 17 21 12 16 7" />
+              <line x1="21" y1="12" x2="9" y2="12" />
+            </svg>
+            Выйти
+          </button>
+
         </div>
       </div>
     </header>
