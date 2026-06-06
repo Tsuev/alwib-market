@@ -321,7 +321,7 @@ const s = styles()
 
         <!-- Stats -->
         <div :class="s.statsRow()">
-          <div v-for="[num, lbl] in [['12K+', 'магазинов'], ['98%', 'довольных'], ['24/7', 'поддержка']]" :key="num">
+          <div v-for="[num, lbl] in [['24/7', 'поддержка']]" :key="num">
             <div :class="s.statNum()">{{ num }}</div>
             <div :class="s.statLabel()">{{ lbl }}</div>
           </div>

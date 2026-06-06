@@ -43,6 +43,9 @@ const styles = tv({
       'max-w-[900px] mx-auto px-8 h-14 flex items-center justify-between gap-4',
     brand:
       'flex items-center gap-2.5 font-bold text-[15px] text-[var(--text)] shrink-0',
+    topbarActions: 'flex items-center gap-2 shrink-0',
+    supportLink:
+      'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--btn-radius)] text-xs font-semibold text-[var(--text-sub)] hover:text-[var(--accent)] hover:bg-[var(--surface-alt)] transition-[color,background] duration-[180ms]',
     themeTabs:
       'flex gap-[3px] bg-[var(--surface-alt)] rounded-[10px] p-[3px] overflow-x-auto transition-[background] duration-300',
     themeTab:
@@ -280,12 +283,25 @@ function openEdit(p: Product) {
           <span>Онлайн Витрина</span>
         </div>
 
-        <button
-          :class="[s.planBadge(), store.isPro ? s.planBadgePro() : s.planBadgeFree()]"
-          @click="showPlanDialog = true"
-        >
-          {{ store.isPro ? '✦ Pro' : 'Free' }}
-        </button>
+        <div :class="s.topbarActions()">
+          <a
+            :class="s.supportLink()"
+            href="https://t.me/Qarimansur"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M21.94 4.35 18.62 20c-.25 1.1-.9 1.37-1.82.85l-5.04-3.72-2.43 2.34c-.27.27-.5.5-1.02.5l.36-5.13 9.35-8.45c.41-.36-.09-.56-.63-.2L5.83 13.47.86 11.91c-1.08-.34-1.1-1.08.22-1.6L20.5 2.83c.9-.34 1.68.2 1.44 1.52Z" />
+            </svg>
+            Поддержка
+          </a>
+          <button
+            :class="[s.planBadge(), store.isPro ? s.planBadgePro() : s.planBadgeFree()]"
+            @click="showPlanDialog = true"
+          >
+            {{ store.isPro ? '✦ Pro' : 'Free' }}
+          </button>
+        </div>
       </div>
     </header>
 
