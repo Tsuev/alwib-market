@@ -16,6 +16,7 @@ const showPass = ref(false)
 const showConfirm = ref(false)
 const loading = ref(false)
 const googleLoading = ref(false)
+const showGoogleAuth = false
 const error = ref('')
 const success = ref(false)
 const emailFocused = ref(false)
@@ -610,7 +611,7 @@ const s = styles()
           </div>
 
           <!-- Divider (not shown in forgot mode) -->
-          <div v-if="mode !== 'forgot'" :class="s.divider()" style="animation: fadeUp 350ms 160ms ease both">
+          <div v-if="showGoogleAuth && mode !== 'forgot'" :class="s.divider()" style="animation: fadeUp 350ms 160ms ease both">
             <div :class="s.dividerLine()" />
             <span :class="s.dividerText()">или</span>
             <div :class="s.dividerLine()" />
@@ -618,7 +619,7 @@ const s = styles()
 
           <!-- Google button (not shown in forgot mode) -->
           <button
-            v-if="mode !== 'forgot'"
+            v-if="showGoogleAuth && mode !== 'forgot'"
             :class="s.googleBtn()"
             :disabled="googleLoading"
             style="animation: fadeUp 350ms 200ms ease both"
@@ -644,6 +645,7 @@ const s = styles()
             </svg>
             {{ googleLoading ? 'Перенаправление…' : 'Продолжить с Google' }}
           </button>
+
         </template>
       </div>
     </div>
