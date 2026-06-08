@@ -42,12 +42,12 @@ const styles = tv({
     topbar:
       'bg-[var(--surface)] border-b border-[var(--border-color)] relative z-10 shrink-0 transition-[background,border-color] duration-300',
     topbarInner:
-      'max-w-[900px] mx-auto px-8 h-14 flex items-center justify-between gap-4',
+      'max-w-[900px] mx-auto px-4 sm:px-8 py-3 sm:py-0 min-h-14 flex flex-col items-center sm:flex-row sm:items-center justify-between gap-3 sm:gap-4',
     brand:
-      'flex items-center gap-2.5 font-bold text-[15px] text-[var(--text)] shrink-0',
-    topbarActions: 'flex items-center gap-2 shrink-0',
+      'flex items-center justify-center gap-2.5 font-bold text-[15px] text-[var(--text)] shrink min-w-0 text-center',
+    topbarActions: 'flex items-center flex-wrap justify-center sm:justify-end gap-2 min-w-0',
     userBadge:
-      'inline-flex items-center px-3 py-1.5 rounded-[var(--btn-radius)] text-xs font-semibold text-[var(--text)] bg-[var(--surface-alt)] border border-[var(--border-color)] max-w-[220px] truncate transition-[background,border-color] duration-300',
+      'inline-flex items-center px-3 py-1.5 rounded-[var(--btn-radius)] text-xs font-semibold text-[var(--text)] bg-[var(--surface-alt)] border border-[var(--border-color)] max-w-[140px] sm:max-w-[220px] truncate transition-[background,border-color] duration-300',
     supportLink:
       'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--btn-radius)] text-xs font-semibold text-[var(--text-sub)] hover:text-[var(--accent)] hover:bg-[var(--surface-alt)] transition-[color,background] duration-[180ms]',
     logoutBtn:
