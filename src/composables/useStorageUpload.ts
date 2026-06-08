@@ -1,10 +1,44 @@
 import { useSupabase } from '@/composables/useSupabase'
+import heic2any from 'heic2any'
 
 const BUCKET = 'Alwib-store'
-const MAX_INPUT_BYTES = 5 * 1024 * 1024 // 5 MB hard limit
-const TARGET_BYTES = 2.5 * 1024 * 1024 // compress down to ~2.5 MB
+const MAX_INPUT_BYTES = 20 * 1024 * 1024
+const TARGET_BYTES = 1.8 * 1024 * 1024
+const HEIC_TYPES = new Set(['image/heic', 'image/heif'])
 
 const { supabase } = useSupabase()
+
+function isHeicFile(file: File) {
+  return HEIC_TYPES.has(file.type) || /\.hei[cf]$/i.test(file.name)
+}
+
+function isSupportedImage(file: File) {
+  return file.type.startsWith('image/') || isHeicFile(file)
+}
+
+function replaceExtension(name: string, ext: string) {
+  return (name.includes('.') ? name.replace(/\.[^.]+$/, '') : name) + `.${ext}`
+}
+
+async function normalizeImage(file: File): Promise<File> {
+  if (!isHeicFile(file)) return file
+
+  const result = await heic2any({
+    blob: file,
+    toType: 'image/jpeg',
+    quality: 0.9,
+  })
+
+  const blob = Array.isArray(result) ? result[0] : result
+
+  if (!(blob instanceof Blob)) {
+    throw new Error('Не удалось конвертировать HEIC в JPEG')
+  }
+
+  return new File([blob], replaceExtension(file.name, 'jpg'), {
+    type: 'image/jpeg',
+  })
+}
 
 async function compressImage(file: File): Promise<Blob> {
   if (file.size <= TARGET_BYTES) return file
@@ -65,20 +99,23 @@ export async function uploadPhoto(
   userId: string,
   prefix: 'store' | 'product',
 ): Promise<string> {
-  if (!file.type.startsWith('image/')) {
-    throw new Error('Допустимы только изображения (JPG, PNG, WebP и др.)')
+  if (!isSupportedImage(file)) {
+    throw new Error('Допустимы только изображения (JPG, PNG, WebP, HEIC и др.)')
   }
   if (file.size > MAX_INPUT_BYTES) {
-    throw new Error('Размер файла превышает 5 МБ')
+    throw new Error('Размер исходного файла превышает 20 МБ')
   }
 
-  const compressed = await compressImage(file)
-  const ext = file.type === 'image/png' ? 'png' : file.type === 'image/webp' ? 'webp' : 'jpg'
+  const normalized = await normalizeImage(file)
+  const compressed = await compressImage(normalized)
+  const contentType = compressed.type || normalized.type || 'image/jpeg'
+  const ext =
+    contentType === 'image/png' ? 'png' : contentType === 'image/webp' ? 'webp' : 'jpg'
   const path = `${userId}/${prefix}-${Date.now()}.${ext}`
 
   const { error } = await supabase.storage
     .from(BUCKET)
-    .upload(path, compressed, { contentType: file.type, upsert: false })
+    .upload(path, compressed, { contentType, upsert: false })
 
   if (error) throw new Error(error.message)
 

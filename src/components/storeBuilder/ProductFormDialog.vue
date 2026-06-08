@@ -181,7 +181,7 @@ async function handlePhotoUpload(e: Event) {
               {{ photoUploading ? 'Загружаем…' : 'Загрузить фото' }}
               <input
                 type="file"
-                accept="image/*"
+                accept="image/*,.heic,.heif"
                 class="hidden"
                 :disabled="photoUploading"
                 @change="handlePhotoUpload"

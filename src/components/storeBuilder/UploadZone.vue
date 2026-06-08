@@ -53,8 +53,7 @@ const {
 
 function handleFile(file: File | undefined) {
   if (!file) return
-  if (!file.type.startsWith('image/')) return
-  if (file.size > 5 * 1024 * 1024) return // 5 MB pre-check (service validates too)
+  if (!file.type.startsWith('image/') && !/\.hei[cf]$/i.test(file.name)) return
   emit('change', file)
 }
 
@@ -83,7 +82,7 @@ function onDrop(e: DragEvent) {
     <input
       ref="fileInput"
       type="file"
-      accept="image/*"
+      accept="image/*,.heic,.heif"
       class="hidden"
       @change="handleFile(($event.target as HTMLInputElement).files?.[0])"
     />
@@ -123,7 +122,7 @@ function onDrop(e: DragEvent) {
           Загрузите логотип 1:1 или
           <span :class="placeholderAccent()">выберите файл</span>
         </p>
-        <small :class="placeholderSmall()">JPG, PNG, WebP · квадрат лучше всего · до 5 MB</small>
+        <small :class="placeholderSmall()">JPG, PNG, WebP, HEIC · квадрат лучше всего · исходник до 20 MB</small>
       </template>
     </div>
   </div>
