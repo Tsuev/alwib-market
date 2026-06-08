@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, nextTick, onMounted } from 'vue'
+import { ref, computed, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import { tv } from 'tailwind-variants'
 import Dialog from 'primevue/dialog'
 import InputText from 'primevue/inputtext'
@@ -21,6 +21,8 @@ const saving = ref(false)
 const photoUploading = ref(false)
 const saveError = ref('')
 const errors = ref<{ name?: string; price?: string }>({})
+const selectedPhotoFile = ref<File | null>(null)
+const photoPreviewUrl = ref<string | null>(null)
 
 const form = ref({
   name: props.product?.name ?? '',
@@ -33,11 +35,17 @@ const form = ref({
 
 onMounted(() => nextTick(() => { visible.value = true }))
 
+onBeforeUnmount(() => {
+  clearPhotoPreview()
+})
+
 const discount = computed(() => {
   const p = Number(form.value.price)
   const s = Number(form.value.salePrice)
   return p && s ? calcDiscount(p, s) : 0
 })
+
+const displayPhoto = computed(() => photoPreviewUrl.value || form.value.photo)
 
 const styles = tv({
   slots: {
@@ -81,12 +89,27 @@ function validate() {
   return e
 }
 
+function clearPhotoPreview() {
+  if (!photoPreviewUrl.value) return
+  URL.revokeObjectURL(photoPreviewUrl.value)
+  photoPreviewUrl.value = null
+}
+
 async function handleSave() {
   const e = validate()
   if (Object.keys(e).length) { errors.value = e; return }
   saveError.value = ''
   saving.value = true
   try {
+    if (selectedPhotoFile.value) {
+      photoUploading.value = true
+      const session = await getSession()
+      if (!session) throw new Error('Не авторизован')
+      form.value.photo = await uploadPhoto(selectedPhotoFile.value, session.user.id, 'product')
+      selectedPhotoFile.value = null
+      clearPhotoPreview()
+    }
+
     await store.saveProduct({
       ...(props.product?.id ? { id: props.product.id } : {}),
       name: form.value.name,
@@ -100,6 +123,8 @@ async function handleSave() {
   } catch (err) {
     saveError.value = err instanceof Error ? err.message : 'Ошибка при сохранении'
     saving.value = false
+  } finally {
+    photoUploading.value = false
   }
 }
 
@@ -108,21 +133,14 @@ function handleClose() {
   setTimeout(() => emit('close'), 260)
 }
 
-async function handlePhotoUpload(e: Event) {
+function handlePhotoUpload(e: Event) {
   const file = (e.target as HTMLInputElement).files?.[0]
   if (!file) return
-  photoUploading.value = true
-  try {
-    const session = await getSession()
-    if (!session) throw new Error('Не авторизован')
-    form.value.photo = await uploadPhoto(file, session.user.id, 'product')
-  } catch (err) {
-    saveError.value = err instanceof Error ? err.message : 'Ошибка загрузки фото'
-  } finally {
-    photoUploading.value = false
-    // reset input so the same file can be re-selected after an error
-    ;(e.target as HTMLInputElement).value = ''
-  }
+  saveError.value = ''
+  selectedPhotoFile.value = file
+  clearPhotoPreview()
+  photoPreviewUrl.value = URL.createObjectURL(file)
+  ;(e.target as HTMLInputElement).value = ''
 }
 </script>
 
@@ -161,7 +179,7 @@ async function handlePhotoUpload(e: Event) {
           <div :class="s.photoZone()">
             <div class="relative">
               <img
-                :src="form.photo || placeholderSvg(form.name || 'Фото товара', 300, 300)"
+                :src="displayPhoto || placeholderSvg(form.name || 'Фото товара', 300, 300)"
                 alt="product"
                 :class="s.photoImg()"
               />
@@ -178,7 +196,7 @@ async function handlePhotoUpload(e: Event) {
                 <polyline points="17 8 12 3 7 8" />
                 <line x1="12" y1="3" x2="12" y2="15" />
               </svg>
-              {{ photoUploading ? 'Загружаем…' : 'Загрузить фото' }}
+              {{ photoUploading ? 'Загружаем…' : selectedPhotoFile ? 'Фото выбрано' : 'Загрузить фото' }}
               <input
                 type="file"
                 accept="image/*,.heic,.heif"
