@@ -168,6 +168,7 @@ export const SAMPLE_PRODUCTS: Product[] = [
     salePrice: 1800,
     tags: ['керамика', 'кухня', 'handmade'],
     photo: null,
+    views: 0,
   },
   {
     id: 'sample-2',
@@ -178,6 +179,7 @@ export const SAMPLE_PRODUCTS: Product[] = [
     salePrice: null,
     tags: ['сумки', 'лён', 'eco'],
     photo: null,
+    views: 0,
   },
   {
     id: 'sample-3',
@@ -188,6 +190,7 @@ export const SAMPLE_PRODUCTS: Product[] = [
     salePrice: 750,
     tags: ['свечи', 'дом', 'аромат'],
     photo: null,
+    views: 0,
   },
   {
     id: 'sample-4',
@@ -198,6 +201,7 @@ export const SAMPLE_PRODUCTS: Product[] = [
     salePrice: null,
     tags: ['аксессуары', 'зима', 'шерсть'],
     photo: null,
+    views: 0,
   },
   {
     id: 'sample-5',
@@ -208,6 +212,7 @@ export const SAMPLE_PRODUCTS: Product[] = [
     salePrice: null,
     tags: ['wellness', 'чай', 'травы'],
     photo: null,
+    views: 0,
   },
   {
     id: 'sample-6',
@@ -218,6 +223,7 @@ export const SAMPLE_PRODUCTS: Product[] = [
     salePrice: 960,
     tags: ['кухня', 'eco', 'хлопок'],
     photo: null,
+    views: 0,
   },
   {
     id: 'sample-7',
@@ -228,6 +234,7 @@ export const SAMPLE_PRODUCTS: Product[] = [
     salePrice: null,
     tags: ['кухня', 'дерево', 'handmade'],
     photo: null,
+    views: 0,
   },
   {
     id: 'sample-8',
@@ -238,5 +245,6 @@ export const SAMPLE_PRODUCTS: Product[] = [
     salePrice: null,
     tags: ['wellness', 'красота', 'натуральное'],
     photo: null,
+    views: 0,
   },
 ]

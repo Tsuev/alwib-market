@@ -9,6 +9,7 @@ const props = defineProps<{ product: Product; animIdx: number }>()
 const emit = defineEmits<{ edit: [product: Product]; delete: [id: string] }>()
 
 const leaving = ref(false)
+const viewsFormatter = new Intl.NumberFormat('ru-RU')
 
 const styles = tv({
   slots: {
@@ -17,7 +18,9 @@ const styles = tv({
     thumb: 'w-14 h-14 rounded-[calc(var(--radius)-2px)] overflow-hidden shrink-0',
     thumbImg: 'w-full h-full object-cover',
     body: 'flex-1 min-w-0',
+    head: 'flex items-start gap-2',
     name: 'text-sm font-semibold text-[var(--text)] truncate',
+    views: 'inline-flex items-center gap-1 text-[11px] text-[var(--text-sub)] whitespace-nowrap shrink-0',
     priceRow: 'flex items-center gap-2 mt-0.5',
     priceMain: 'font-bold text-[var(--text)] text-sm',
     priceStrike: 'text-xs text-[var(--text-sub)] line-through',
@@ -29,7 +32,7 @@ const styles = tv({
   },
 })
 
-const { root, rootLeaving, thumb, thumbImg, body, name, priceRow, priceMain, priceStrike, pricePct, tagsRow, tag, actions } = styles()
+const { root, rootLeaving, thumb, thumbImg, body, head, name, views, priceRow, priceMain, priceStrike, pricePct, tagsRow, tag, actions } = styles()
 
 function handleDelete() {
   leaving.value = true
@@ -51,7 +54,16 @@ function handleDelete() {
     </div>
 
     <div :class="body()">
-      <div :class="name()">{{ product.name }}</div>
+      <div :class="head()">
+        <div :class="name()">{{ product.name }}</div>
+        <div :class="views()" title="Просмотры карточки">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z" />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+          <span>{{ viewsFormatter.format(product.views) }}</span>
+        </div>
+      </div>
       <div :class="priceRow()">
         <template v-if="product.salePrice">
           <span :class="priceMain()">{{ formatRub(product.salePrice) }}</span>

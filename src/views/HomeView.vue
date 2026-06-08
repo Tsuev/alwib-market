@@ -35,6 +35,7 @@ const copied = ref(false)
 const userEmailLabel = ref('')
 let domainTimer: ReturnType<typeof setTimeout> | null = null
 let domainRequestId = 0
+const viewsFormatter = new Intl.NumberFormat('ru-RU')
 
 const styles = tv({
   slots: {
@@ -65,6 +66,9 @@ const styles = tv({
     section: 'mb-10',
     sectionTitle: 'text-lg font-bold text-[var(--text)]',
     sectionHeader: 'flex items-center justify-between mb-5',
+    statsChip:
+      'inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[var(--border-color)] bg-[var(--surface)] text-[12px] text-[var(--text-sub)]',
+    statsValue: 'font-bold text-[var(--text)]',
     countBadge:
       'inline-flex items-center justify-center min-w-5 h-5 px-1.5 bg-[rgba(var(--accent-rgb),_0.12)] text-[var(--accent)] rounded-full text-[11px] font-bold ml-2',
     formGroup: 'mb-5',
@@ -351,7 +355,17 @@ async function handleSignOut() {
       <div :class="s.contentInner()">
         <!-- Store meta section -->
         <section :class="s.section() + ' stagger-in'">
-          <h2 :class="s.sectionTitle()">Оформление магазина</h2>
+          <div :class="s.sectionHeader()">
+            <h2 :class="s.sectionTitle() + ' mb-0'">Оформление магазина</h2>
+            <div :class="s.statsChip()" title="Общее число открытий магазина">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+              <span>Магазин</span>
+              <span :class="s.statsValue()">{{ viewsFormatter.format(store.storeData.views) }}</span>
+            </div>
+          </div>
 
           <div :class="s.formGroup()">
             <label :class="s.label()">Тема</label>

@@ -6,6 +6,7 @@ import { tv } from 'tailwind-variants'
 import { useStoreBuilderStore } from '@/stores/storeBuilder'
 import { loadStoreBySlug } from '@/services/storeService'
 import { loadProducts } from '@/services/productService'
+import { trackProductView, trackStoreView } from '@/services/analyticsService'
 import { applyTheme } from '@/composables/useTheme'
 import StorePreloader from '@/components/storeBuilder/StorePreloader.vue'
 import StoreProductCard from '@/components/storeBuilder/StoreProductCard.vue'
@@ -108,6 +109,7 @@ onMounted(async () => {
       publicProducts.value = await loadProducts(id)
       applyTheme(theme)
       applyPageMeta(rest.name, rest.photo)
+      void trackStoreView(id)
     } catch {
       notFound.value = true
     } finally {
@@ -152,6 +154,13 @@ const hasMore = computed(() => visibleCount.value < filtered.value.length)
 const sentinelRef = ref<HTMLElement | null>(null)
 
 watch(filtered, () => { visibleCount.value = PAGE_SIZE })
+
+function handleProductOpen(product: Product) {
+  selectedProduct.value = product
+  if (props.slug) {
+    void trackProductView(product.id)
+  }
+}
 
 function onScroll() {
   const el = scrollRef.value
@@ -350,7 +359,7 @@ const s = styles()
           :key="product.id"
           :product="product"
           :animIdx="i"
-          @click="selectedProduct = product"
+          @click="handleProductOpen(product)"
         />
       </div>
 

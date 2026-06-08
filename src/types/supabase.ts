@@ -13,6 +13,7 @@ export interface Database {
           image_url: string | null
           price: number
           discount: number
+          views: number
           created_at: string
         }
         Insert: {
@@ -24,6 +25,7 @@ export interface Database {
           image_url?: string | null
           price: number
           discount?: number
+          views?: number
           created_at?: string
         }
         Update: {
@@ -35,6 +37,7 @@ export interface Database {
           image_url?: string | null
           price?: number
           discount?: number
+          views?: number
           created_at?: string
         }
         Relationships: []
@@ -51,6 +54,7 @@ export interface Database {
           whatsapp: string | null
           telegram: string | null
           plan: string | null
+          views: number
           created_at: string
         }
         Insert: {
@@ -64,6 +68,7 @@ export interface Database {
           whatsapp?: string | null
           telegram?: string | null
           plan?: string | null
+          views?: number
           created_at?: string
         }
         Update: {
@@ -77,6 +82,7 @@ export interface Database {
           whatsapp?: string | null
           telegram?: string | null
           plan?: string | null
+          views?: number
           created_at?: string
         }
         Relationships: []

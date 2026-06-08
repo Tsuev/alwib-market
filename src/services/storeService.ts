@@ -14,6 +14,7 @@ interface DbStore {
   whatsapp: string | null
   telegram: string | null
   plan: string | null
+  views: number | null
   created_at: string
 }
 
@@ -28,6 +29,7 @@ function fromDb(row: DbStore): StoreData & { id: number; theme: string } {
     whatsapp: row.whatsapp || null,
     telegram: row.telegram || null,
     plan: (row.plan as Plan) || 'free',
+    views: row.views ?? 0,
   }
 }
 

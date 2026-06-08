@@ -5,7 +5,16 @@ import { applyTheme } from '@/composables/useTheme'
 import { loadStore, saveStore as dbSaveStore, updateTheme as dbUpdateTheme } from '@/services/storeService'
 import { loadProducts, saveProduct as dbSaveProduct, removeProduct } from '@/services/productService'
 
-const DEFAULT_STORE: StoreData = { name: '', domain: '', description: '', photo: null, whatsapp: null, telegram: null, plan: 'free' }
+const DEFAULT_STORE: StoreData = {
+  name: '',
+  domain: '',
+  description: '',
+  photo: null,
+  whatsapp: null,
+  telegram: null,
+  plan: 'free',
+  views: 0,
+}
 
 export const useStoreBuilderStore = defineStore('storeBuilder', () => {
   const theme = ref('minimal')
@@ -57,7 +66,7 @@ export const useStoreBuilderStore = defineStore('storeBuilder', () => {
     }
   }
 
-  async function saveProduct(p: Omit<Product, 'id'> & { id?: string }): Promise<void> {
+  async function saveProduct(p: Omit<Product, 'id' | 'views'> & { id?: string }): Promise<void> {
     if (!userId.value) throw new Error('Не авторизован')
 
     // Auto-create store on first product save if not published yet

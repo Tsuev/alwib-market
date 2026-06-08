@@ -12,8 +12,11 @@ interface DbProduct {
   image_url: string | null
   price: number
   discount: number
+  views: number | null
   created_at: string
 }
+
+type DbProductWrite = Omit<DbProduct, 'id' | 'created_at' | 'views'>
 
 function fromDb(row: DbProduct): Product {
   return {
@@ -24,13 +27,14 @@ function fromDb(row: DbProduct): Product {
     salePrice: row.discount > 0 ? Math.round(row.price * (1 - row.discount / 100)) : null,
     tags: row.tags || [],
     photo: row.image_url || null,
+    views: row.views ?? 0,
   }
 }
 
 function toDb(
-  p: Omit<Product, 'id'>,
+  p: Omit<Product, 'id' | 'views'>,
   storeId: number,
-): Omit<DbProduct, 'id' | 'created_at'> {
+): DbProductWrite {
   const discount =
     p.salePrice && p.salePrice > 0 && p.salePrice < p.price
       ? Math.round((1 - p.salePrice / p.price) * 100)
@@ -58,7 +62,7 @@ export async function loadProducts(storeId: number): Promise<Product[]> {
 }
 
 export async function saveProduct(
-  product: Omit<Product, 'id'> & { id?: string },
+  product: Omit<Product, 'id' | 'views'> & { id?: string },
   storeId: number,
 ): Promise<Product> {
   const row = toDb(product, storeId)

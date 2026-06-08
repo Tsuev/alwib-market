@@ -10,6 +10,7 @@ export interface Product {
   salePrice: number | null
   tags: string[]
   photo: string | null
+  views: number
 }
 
 export type Plan = 'free' | 'pro'
@@ -23,6 +24,7 @@ export interface StoreData {
   whatsapp: string | null
   telegram: string | null
   plan: Plan
+  views: number
 }
 
 export interface Theme {
