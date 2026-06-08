@@ -34,6 +34,7 @@ const bannerUploading = ref(false)
 const copied = ref(false)
 const userEmailLabel = ref('')
 let domainTimer: ReturnType<typeof setTimeout> | null = null
+let domainRequestId = 0
 
 const styles = tv({
   slots: {
@@ -175,7 +176,11 @@ function handleDomainInput(e: Event) {
     return
   }
   domainTimer = setTimeout(async () => {
+    const requestId = ++domainRequestId
     const available = await checkSlugAvailable(clean)
+    if (requestId !== domainRequestId || clean !== store.storeData.domain.trim().toLowerCase()) {
+      return
+    }
     if (available === null) {
       domainStatus.value = 'idle'
       return
@@ -231,6 +236,11 @@ async function handlePublish() {
   if (hasError) return
 
   const cleanSlug = store.storeData.domain.trim().toLowerCase()
+  domainRequestId++
+  if (domainTimer) {
+    clearTimeout(domainTimer)
+    domainTimer = null
+  }
   const available = await checkSlugAvailable(cleanSlug)
   if (available === false) {
     domainStatus.value = 'taken'
@@ -244,7 +254,10 @@ async function handlePublish() {
   }
 
   try {
+    store.storeData.domain = cleanSlug
     await store.publishStore()
+    domainStatus.value = 'available'
+    domainError.value = ''
     toast.add({
       severity: 'success',
       summary: 'Готово',
