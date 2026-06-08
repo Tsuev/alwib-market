@@ -21,9 +21,14 @@ Deno.serve(async (req) => {
   }
 
   let slug: string | undefined
+  let currentStoreId: number | null = null
   try {
     const body = await req.json()
     slug = typeof body.slug === 'string' ? body.slug.toLowerCase().trim() : undefined
+    currentStoreId =
+      typeof body.currentStoreId === 'number' && Number.isInteger(body.currentStoreId)
+        ? body.currentStoreId
+        : null
   } catch {
     return Response.json({ available: false, reason: 'invalid' }, { headers: corsHeaders })
   }
@@ -63,7 +68,9 @@ Deno.serve(async (req) => {
     .select('id')
     .eq('slug', slug)
 
-  if (currentUserId) {
+  if (currentStoreId) {
+    query = query.neq('id', currentStoreId)
+  } else if (currentUserId) {
     query = query.neq('user_id', currentUserId)
   }
 

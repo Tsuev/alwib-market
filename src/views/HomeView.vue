@@ -362,7 +362,7 @@ async function handleSignOut() {
                 <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z" />
                 <circle cx="12" cy="12" r="3" />
               </svg>
-              <span>Магазин</span>
+              <span>Просмотры магазина</span>
               <span :class="s.statsValue()">{{ viewsFormatter.format(store.storeData.views) }}</span>
             </div>
           </div>
