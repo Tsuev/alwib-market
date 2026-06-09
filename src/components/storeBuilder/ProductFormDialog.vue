@@ -21,7 +21,7 @@ const saving = ref(false)
 const photoUploading = ref(false)
 const photoPreparing = ref(false)
 const saveError = ref('')
-const errors = ref<{ name?: string; price?: string }>({})
+const errors = ref<{ name?: string; price?: string; salePrice?: string }>({})
 const selectedPhotoFile = ref<File | null>(null)
 const photoPreviewUrl = ref<string | null>(null)
 
@@ -84,9 +84,19 @@ const s = styles()
 
 function validate() {
   const e: typeof errors.value = {}
+  const price = Number(form.value.price)
+  const salePrice = form.value.salePrice ? Number(form.value.salePrice) : null
+
   if (!form.value.name.trim()) e.name = 'Введите название товара'
-  if (!form.value.price || isNaN(Number(form.value.price)) || Number(form.value.price) <= 0)
+  if (!form.value.price || isNaN(price) || price <= 0)
     e.price = 'Укажите корректную цену'
+  if (form.value.salePrice) {
+    if (salePrice === null || isNaN(salePrice) || salePrice <= 0) {
+      e.salePrice = 'Укажите корректную цену со скидкой'
+    } else if (!isNaN(price) && price > 0 && salePrice >= price) {
+      e.salePrice = 'Цена со скидкой должна быть меньше обычной'
+    }
+  }
   return e
 }
 
@@ -277,12 +287,18 @@ async function handlePhotoUpload(e: Event) {
                   placeholder="1 800"
                   :pt="{
                     root: {
-                      class: s.input() + ' pr-14' + (form.salePrice ? ' text-[var(--accent)]' : ''),
+                      class:
+                        s.input() +
+                        ' pr-14' +
+                        (form.salePrice ? ' text-[var(--accent)]' : '') +
+                        (errors.salePrice ? ' ' + s.inputInvalid() : ''),
+                      onInput: () => (errors.salePrice = ''),
                     },
                   }"
                 />
                 <span v-if="discount > 0" :class="s.discountBadge()">−{{ discount }}%</span>
               </div>
+              <div v-if="errors.salePrice" :class="s.fieldError()">{{ errors.salePrice }}</div>
             </div>
           </div>
 

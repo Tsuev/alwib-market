@@ -12,6 +12,7 @@ interface DbProduct {
   image_url: string | null
   price: number
   discount: number
+  sale_price: number | null
   views: number | null
   created_at: string
 }
@@ -19,12 +20,19 @@ interface DbProduct {
 type DbProductWrite = Omit<DbProduct, 'id' | 'created_at' | 'views'>
 
 function fromDb(row: DbProduct): Product {
+  const salePrice =
+    row.sale_price && row.sale_price > 0 && row.sale_price < row.price
+      ? row.sale_price
+      : row.discount > 0
+        ? Math.round(row.price * (1 - row.discount / 100))
+        : null
+
   return {
     id: row.id,
     name: row.name,
     description: row.description || '',
     price: row.price,
-    salePrice: row.discount > 0 ? Math.round(row.price * (1 - row.discount / 100)) : null,
+    salePrice,
     tags: row.tags || [],
     photo: row.image_url || null,
     views: row.views ?? 0,
@@ -47,6 +55,7 @@ function toDb(
     image_url: p.photo || null,
     price: p.price,
     discount,
+    sale_price: discount > 0 ? p.salePrice : null,
   }
 }
 

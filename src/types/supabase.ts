@@ -13,6 +13,7 @@ export interface Database {
           image_url: string | null
           price: number
           discount: number
+          sale_price: number | null
           views: number
           created_at: string
         }
@@ -25,6 +26,7 @@ export interface Database {
           image_url?: string | null
           price: number
           discount?: number
+          sale_price?: number | null
           views?: number
           created_at?: string
         }
@@ -37,6 +39,7 @@ export interface Database {
           image_url?: string | null
           price?: number
           discount?: number
+          sale_price?: number | null
           views?: number
           created_at?: string
         }
