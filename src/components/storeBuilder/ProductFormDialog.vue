@@ -7,7 +7,7 @@ import Textarea from 'primevue/textarea'
 import InputChips from 'primevue/inputchips'
 import type { Product } from '@/types/types'
 import { placeholderSvg, calcDiscount } from '@/composables/useImageToBase64'
-import { uploadPhoto } from '@/composables/useStorageUpload'
+import { preparePhotoForUpload, uploadPhoto } from '@/composables/useStorageUpload'
 import { getSession } from '@/services/authServices'
 import { useStoreBuilderStore } from '@/stores/storeBuilder'
 
@@ -19,6 +19,7 @@ const isEdit = computed(() => !!props.product)
 const visible = ref(false)
 const saving = ref(false)
 const photoUploading = ref(false)
+const photoPreparing = ref(false)
 const saveError = ref('')
 const errors = ref<{ name?: string; price?: string }>({})
 const selectedPhotoFile = ref<File | null>(null)
@@ -133,14 +134,26 @@ function handleClose() {
   setTimeout(() => emit('close'), 260)
 }
 
-function handlePhotoUpload(e: Event) {
+async function handlePhotoUpload(e: Event) {
   const file = (e.target as HTMLInputElement).files?.[0]
-  if (!file) return
-  saveError.value = ''
-  selectedPhotoFile.value = file
-  clearPhotoPreview()
-  photoPreviewUrl.value = URL.createObjectURL(file)
   ;(e.target as HTMLInputElement).value = ''
+  if (!file) return
+
+  saveError.value = ''
+  photoPreparing.value = true
+
+  try {
+    const preparedFile = await preparePhotoForUpload(file)
+    selectedPhotoFile.value = preparedFile
+    clearPhotoPreview()
+    photoPreviewUrl.value = URL.createObjectURL(preparedFile)
+  } catch (err) {
+    selectedPhotoFile.value = null
+    clearPhotoPreview()
+    saveError.value = err instanceof Error ? err.message : 'Ошибка при обработке фото'
+  } finally {
+    photoPreparing.value = false
+  }
 }
 </script>
 
@@ -184,24 +197,24 @@ function handlePhotoUpload(e: Event) {
                 :class="s.photoImg()"
               />
               <div
-                v-if="photoUploading"
+                v-if="photoUploading || photoPreparing"
                 class="absolute inset-0 flex items-center justify-center bg-black/30 backdrop-blur-[2px]"
               >
                 <span class="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               </div>
             </div>
-            <label :class="[s.photoBtn(), photoUploading && s.photoBtnDisabled()]">
+            <label :class="[s.photoBtn(), (photoUploading || photoPreparing) && s.photoBtnDisabled()]">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                 <polyline points="17 8 12 3 7 8" />
                 <line x1="12" y1="3" x2="12" y2="15" />
               </svg>
-              {{ photoUploading ? 'Загружаем…' : selectedPhotoFile ? 'Фото выбрано' : 'Загрузить фото' }}
+              {{ photoPreparing ? 'Подготавливаем…' : photoUploading ? 'Загружаем…' : selectedPhotoFile ? 'Фото выбрано' : 'Загрузить фото' }}
               <input
                 type="file"
                 accept="image/*,.heic,.heif"
                 class="hidden"
-                :disabled="photoUploading"
+                :disabled="photoUploading || photoPreparing"
                 @change="handlePhotoUpload"
               />
             </label>
