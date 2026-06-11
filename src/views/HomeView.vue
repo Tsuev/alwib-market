@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { tv } from 'tailwind-variants'
 import InputText from 'primevue/inputtext'
 import InputMask from 'primevue/inputmask'
@@ -14,10 +14,13 @@ import UploadZone from '@/components/storeBuilder/UploadZone.vue'
 import AdminProductCard from '@/components/storeBuilder/AdminProductCard.vue'
 import ProductFormDialog from '@/components/storeBuilder/ProductFormDialog.vue'
 import PlanDialog from '@/components/storeBuilder/PlanDialog.vue'
+import SubscriptionSuccessDialog from '@/components/storeBuilder/SubscriptionSuccessDialog.vue'
 import { FREE_THEME_IDS } from '@/constants/constants'
+import { clearPendingCheckout, getPendingCheckout } from '@/services/subscriptionService'
 import type { Product } from '@/types/types'
 
 const router = useRouter()
+const route = useRoute()
 const store = useStoreBuilderStore()
 const toast = useToast()
 
@@ -33,6 +36,7 @@ const domainFocused = ref(false)
 const bannerUploading = ref(false)
 const copied = ref(false)
 const userEmailLabel = ref('')
+const showSubscriptionSuccessDialog = ref(false)
 let domainTimer: ReturnType<typeof setTimeout> | null = null
 let domainRequestId = 0
 const viewsFormatter = new Intl.NumberFormat('ru-RU')
@@ -62,10 +66,10 @@ const styles = tv({
     loadingSpinner:
       'w-8 h-8 border-[3px] border-[rgba(var(--accent-rgb),_0.2)] border-t-[var(--accent)] rounded-full animate-spin',
     scrollArea: 'flex-1 overflow-y-auto',
-    contentInner: 'max-w-[900px] mx-auto px-8 py-8 pb-[120px]',
+    contentInner: 'max-w-[900px] mx-auto px-4 sm:px-8 py-6 sm:py-8 pb-[132px] sm:pb-[120px]',
     section: 'mb-10',
     sectionTitle: 'text-lg font-bold text-[var(--text)]',
-    sectionHeader: 'flex items-center justify-between mb-5',
+    sectionHeader: 'flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5',
     statsChip:
       'inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[var(--border-color)] bg-[var(--surface)] text-[12px] text-[var(--text-sub)]',
     statsValue: 'font-bold text-[var(--text)]',
@@ -98,17 +102,17 @@ const styles = tv({
     spinner:
       'w-3.5 h-3.5 border-2 border-[rgba(var(--accent-rgb),_0.2)] border-t-[var(--accent)] rounded-full animate-spin inline-block',
     addBtn:
-      'inline-flex items-center gap-[7px] px-4 py-2 border-[1.5px] border-[var(--accent)] text-[var(--accent)] rounded-[var(--btn-radius)] text-[13px] font-semibold transition-[background] duration-[180ms] hover:bg-[rgba(var(--accent-rgb),_0.07)]',
+      'inline-flex items-center justify-center gap-[7px] px-4 py-2 border-[1.5px] border-[var(--accent)] text-[var(--accent)] rounded-[var(--btn-radius)] text-[13px] font-semibold transition-[background] duration-[180ms] hover:bg-[rgba(var(--accent-rgb),_0.07)] w-full sm:w-auto',
     emptyProducts:
       'flex flex-col items-center justify-center gap-2.5 py-12 px-5 text-[var(--text-sub)] text-center border border-dashed border-[var(--border-color)] rounded-[var(--radius)] fade-in',
     emptyText: 'text-[15px] font-medium',
     productList: 'flex flex-col gap-2',
     footer:
-      'shrink-0 border-t border-[var(--border-color)] bg-[var(--surface)] px-8 py-3 flex items-center justify-end gap-2 transition-[background,border-color] duration-300',
+      'shrink-0 border-t border-[var(--border-color)] bg-[var(--surface)] px-4 sm:px-8 py-3 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 transition-[background,border-color] duration-300',
     previewBtn:
-      'inline-flex items-center gap-[7px] px-4 py-2.5 text-sm font-medium text-[var(--text-sub)] rounded-[var(--btn-radius)] hover:text-[var(--text)] hover:bg-[var(--surface-alt)] transition-[color,background] duration-[180ms] border-0 bg-transparent cursor-pointer',
+      'inline-flex items-center justify-center gap-[7px] px-4 py-2.5 text-sm font-medium text-[var(--text-sub)] rounded-[var(--btn-radius)] hover:text-[var(--text)] hover:bg-[var(--surface-alt)] transition-[color,background] duration-[180ms] border-0 bg-transparent cursor-pointer w-full sm:w-auto',
     publishBtn:
-      'inline-flex items-center justify-center gap-2 px-[22px] py-2.5 bg-[var(--accent)] text-white rounded-[var(--btn-radius)] text-sm font-semibold hover:opacity-85 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed transition-[opacity,transform] duration-[180ms] border-0 cursor-pointer',
+      'inline-flex items-center justify-center gap-2 px-[22px] py-2.5 bg-[var(--accent)] text-white rounded-[var(--btn-radius)] text-sm font-semibold hover:opacity-85 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed transition-[opacity,transform] duration-[180ms] border-0 cursor-pointer w-full sm:w-auto',
     publishSpinner:
       'w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin inline-block',
     copyBtn:
@@ -132,8 +136,57 @@ onMounted(async () => {
   if (session) {
     userEmailLabel.value = session.user.email?.split('@')[0] || session.user.email || ''
     await store.loadData(session.user.id)
+    await resolvePendingSubscription(session.user.id)
   }
 })
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+async function resolvePendingSubscription(userId: string): Promise<void> {
+  const pendingCheckout = getPendingCheckout()
+  if (!pendingCheckout) return
+
+  if (Date.now() - pendingCheckout.startedAt > 1000 * 60 * 30) {
+    clearPendingCheckout()
+    return
+  }
+
+  if (store.isPro) {
+    clearPendingCheckout()
+    await clearSubscriptionQuery()
+    showSubscriptionSuccessDialog.value = true
+    return
+  }
+
+  const shouldCheckImmediately = route.query.subscription === 'success'
+  const attempts = shouldCheckImmediately ? 6 : 3
+
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    if (attempt > 0 || shouldCheckImmediately) {
+      await sleep(1500)
+    }
+
+    await store.loadData(userId)
+
+    if (store.isPro) {
+      clearPendingCheckout()
+      await clearSubscriptionQuery()
+      showSubscriptionSuccessDialog.value = true
+      return
+    }
+  }
+}
+
+async function clearSubscriptionQuery(): Promise<void> {
+  if (!('subscription' in route.query)) return
+
+  const nextQuery = { ...route.query }
+  delete nextQuery.subscription
+
+  await router.replace({ query: nextQuery })
+}
 
 async function handleBannerUpload(file: File) {
   const session = await getSession()
@@ -607,6 +660,11 @@ async function handleSignOut() {
 
   <!-- Plan modal -->
   <PlanDialog v-if="showPlanDialog" @close="showPlanDialog = false" />
+
+  <SubscriptionSuccessDialog
+    v-if="showSubscriptionSuccessDialog"
+    @close="showSubscriptionSuccessDialog = false"
+  />
 </template>
 
 <style lang="scss" scoped>
