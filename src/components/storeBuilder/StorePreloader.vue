@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, watch } from 'vue'
 import { tv } from 'tailwind-variants'
 
-defineProps<{ name: string; photo: string | null }>()
+const props = defineProps<{ name: string; photo: string | null; loading: boolean }>()
 const emit = defineEmits<{ done: [] }>()
 
 const fading = ref(false)
@@ -21,13 +21,16 @@ const styles = tv({
 
 const { root, rootFading, logo, storeName, spinnerWrap, ring } = styles()
 
-onMounted(() => {
-  const t = setTimeout(() => {
-    fading.value = true
-    setTimeout(() => emit('done'), 500)
-  }, 900)
-  return () => clearTimeout(t)
-})
+// Запускаем fade-out когда данные загружены (loading → false)
+watch(
+  () => props.loading,
+  (val) => {
+    if (!val) {
+      fading.value = true
+      setTimeout(() => emit('done'), 500)
+    }
+  },
+)
 </script>
 
 <template>

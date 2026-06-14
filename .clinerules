@@ -1,0 +1,94 @@
+# Cline Rules — alwib-market
+
+## Стек технологий
+
+- **Frontend:** Vue 3 (Composition API, `<script setup>`) + TypeScript + Vite
+- **State:** Pinia (composition-style `defineStore`)
+- **Router:** Vue Router 4
+- **UI:** PrimeVue 4 (Aura theme) + PrimeVue Headless
+- **CSS:** TailwindCSS v4 + `tailwind-variants` (`tv`)
+- **Backend:** Supabase (Auth, Database, Edge Functions, Storage)
+- **Платежи:** YooKassa (yookassa-webhook, create-yookassa-payment)
+- **HTTP клиенты:** Supabase client + axios (с Bearer токеном)
+
+## Команды
+
+```sh
+npm run dev                # Запуск dev-сервера (--host)
+npm run build              # Type-check + сборка
+npm run type-check         # Проверка типов vue-tsc
+npm run lint               # ESLint с автофиксом
+npm run format             # Prettier для src/
+npm run test:e2e           # Playwright E2E тесты (headless)
+npm run test:e2e:headed    # Playwright с UI
+npm run test:e2e:install   # Установка Playwright браузеров
+```
+
+## Переменные окружения
+
+Создать `.env` (не коммитить):
+- `VITE_SUPABASE_URL` — URL Supabase проекта
+- `VITE_SUPABASE_ANON_KEY` — anon key
+- `VITE_SUPABASE_PUBLISHABLE_KEY` — publishable key
+- `VITE_API_BASE_URL` — базовый URL для axios
+- `YOOKASSA_TEST_SHOP_ID` / `YOOKASSA_TEST_SECRET_KEY` — тестовые
+- `YOOKASSA_PROD_SHOP_ID` / `YOOKASSA_PROD_SECRET_KEY` — боевые
+- `YOOKASSA_RETURN_URL` — редирект после оплаты
+- `YOOKASSA_WEBHOOK_URL` — публичный URL вебхука
+
+## Архитектура проекта
+
+```
+src/
+├── assets/              # Статические ресурсы, CSS
+├── components/          # Vue компоненты
+│   └── storeBuilder/    # Компоненты конструктора магазина
+├── composables/         # Композаблы (useSupabase, useBreakpoints, etc.)
+├── constants/           # Константы
+├── enums/               # Перечисления
+├── layouts/             # Шаблоны страниц (default.vue)
+├── public/              # Публичные файлы
+├── router/              # Конфигурация маршрутов
+├── services/            # Сервисы (auth, product, store, subscription, analytics)
+├── stores/              # Pinia stores
+├── types/               # TypeScript типы
+└── views/               # Страницы (AuthView, HomeView, StorefrontView)
+```
+
+**Путь-алиас:** `@` → `src/`
+
+## Правила UI компонентов
+
+1. **PrimeVue компоненты** — приоритет: PrimeVue → PrimeVue Headless → кастом
+2. **Не изобретать велосипед** — `<Button>`, `<Dialog>`, `<DataTable>`, `<Select>`, `<InputText>`, `<Toast>`, `<Galleria>` и т.д.
+3. **Headless** — использовать слоты для кастомной разметки, когда нужно
+
+## Правила стилизации (tailwind-variants)
+
+1. Все стили через `tv()` — без голых class-строк
+2. `tv()` вызывается один раз на компонент на уровне модуля
+3. Слоты: `root`, `header`, `body`, `footer`, `label`, `icon` и т.д.
+4. Variants для intent/size/state — без тернарников в template
+5. PrimeVue стилизация через `pt` prop:
+6. Cтили через `tv()` писать внутри массивов например: `['flex', 'mx-0']`
+
+```vue
+<Button label="Save" :pt="{ root: { class: styles().root() } }" />
+```
+
+6. Без `@apply` в CSS
+7. Без `class="a b c d"` напрямую на элементах — только через tv-слоты
+
+## Supabase
+
+- RLS включён по умолчанию на всех таблицах в public схеме
+- `user_metadata` не использовать для авторизации — только `app_metadata`
+- Views с `security_invoker = true`
+- Storage upsert требует INSERT + SELECT + UPDATE
+- Edge Functions в `supabase/functions/` (Deno/TypeScript)
+
+## Git
+
+- `main` — основная ветка
+- Коммиты через `git commit`
+- Стандартные сообщения коммитов

@@ -84,6 +84,7 @@ const displayProducts = computed(() =>
   props.slug ? publicProducts.value : store.products,
 )
 
+const loading = ref(true)
 const ready = ref(false)
 const search = ref('')
 const debouncedSearch = refDebounced(search, 300)
@@ -101,20 +102,27 @@ onMounted(async () => {
       const storeRow = await loadStoreBySlug(props.slug)
       if (!storeRow) {
         notFound.value = true
+        loading.value = false
         ready.value = true
         return
       }
       const { id, theme, ...rest } = storeRow
       publicStoreData.value = { ...rest, theme }
-      publicProducts.value = await loadProducts(id)
       applyTheme(theme)
       applyPageMeta(rest.name, rest.photo)
       void trackStoreView(id)
+
+      // Загружаем товары отдельно — прелоадер показывает магазин с именем/лого,
+      // а товары доезжают чуть позже
+      loading.value = false
+      publicProducts.value = await loadProducts(id)
     } catch {
       notFound.value = true
-    } finally {
+      loading.value = false
       ready.value = true
     }
+  } else {
+    loading.value = false
   }
 
   observer = new IntersectionObserver(
@@ -237,6 +245,7 @@ const s = styles()
       v-if="!ready"
       :name="displayName || 'Магазин'"
       :photo="displayPhoto"
+      :loading="loading"
       @done="ready = true"
     />
 

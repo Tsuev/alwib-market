@@ -298,6 +298,7 @@ async function handlePublish() {
     clearTimeout(domainTimer)
     domainTimer = null
   }
+
   const available = await checkSlugAvailable(cleanSlug)
   if (available === false) {
     domainStatus.value = 'taken'
