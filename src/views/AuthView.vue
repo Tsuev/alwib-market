@@ -116,6 +116,12 @@ function switchMode(m: Mode) {
   success.value = false
 }
 
+const decorativeCircles: Array<{ w: number; h: number; op: number; top?: string; bottom?: string; left?: string; right?: string }> = [
+  { w: 220, h: 220, top: '-60px', right: '-60px', op: 0.12 },
+  { w: 140, h: 140, top: '160px', left: '-50px', op: 0.08 },
+  { w: 180, h: 180, bottom: '-60px', right: '20px', op: 0.1 },
+]
+
 const geoShapes: Array<{
   s: number
   t?: string; r?: string; b?: string; l?: string
@@ -251,11 +257,7 @@ const s = styles()
       >
         <!-- Decorative floating circles -->
         <div
-          v-for="(c, i) in [
-            { w: 220, h: 220, top: '-60px', right: '-60px', op: 0.12 },
-            { w: 140, h: 140, top: '160px', left: '-50px', op: 0.08 },
-            { w: 180, h: 180, bottom: '-60px', right: '20px', op: 0.1 },
-          ]"
+          v-for="(c, i) in decorativeCircles"
           :key="i"
           class="absolute rounded-full border border-white/50 pointer-events-none"
           :style="{
