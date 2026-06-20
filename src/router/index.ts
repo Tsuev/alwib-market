@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import { getSession } from '@/services/authServices'
+import { trackPageView } from '@/services/yandexMetrika'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -37,6 +38,19 @@ router.beforeEach(async (to) => {
 
   if (!session && !isPublic) return { name: 'auth' }
   if (session && to.name === 'auth') return { name: 'home' }
+})
+
+router.afterEach((to, from) => {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  const currentUrl = new URL(to.fullPath, window.location.origin).href
+  const previousUrl = from.fullPath
+    ? new URL(from.fullPath, window.location.origin).href
+    : document.referrer
+
+  trackPageView(currentUrl, previousUrl)
 })
 
 export default router
