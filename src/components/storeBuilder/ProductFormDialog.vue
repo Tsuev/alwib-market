@@ -199,7 +199,7 @@ async function handlePhotoUpload(e: Event) {
       <div :class="s.cols()">
         <!-- Photo column -->
         <div>
-          <div :class="s.photoZone()">
+          <div :class="s.photoZone()" data-tour="product-photo">
             <div class="relative">
               <img
                 :src="displayPhoto || placeholderSvg(form.name || 'Фото товара', 300, 300)"
@@ -233,7 +233,7 @@ async function handlePhotoUpload(e: Event) {
 
         <!-- Form column -->
         <div :class="s.formCol()">
-          <div :class="s.formGroup()">
+          <div :class="s.formGroup()" data-tour="product-name">
             <label :class="s.label()">Название <span :class="s.req()">*</span></label>
             <InputText
               v-model="form.name"
@@ -259,7 +259,7 @@ async function handlePhotoUpload(e: Event) {
             />
           </div>
 
-          <div :class="s.formRow2()">
+          <div :class="s.formRow2()" data-tour="product-price">
             <div :class="s.formGroup()">
               <label :class="s.label()">Цена, ₽ <span :class="s.req()">*</span></label>
               <InputText
@@ -302,7 +302,7 @@ async function handlePhotoUpload(e: Event) {
             </div>
           </div>
 
-          <div :class="s.formGroup()">
+          <div :class="s.formGroup()" data-tour="product-tags">
             <label :class="s.label()">Теги</label>
             <InputChips
               v-model="form.tags"
@@ -336,7 +336,7 @@ async function handlePhotoUpload(e: Event) {
     <!-- Custom footer -->
     <div :class="s.footer()">
       <button :class="s.cancelBtn()" @click="handleClose">Отмена</button>
-      <button :class="s.saveBtn()" :disabled="saving || photoUploading" @click="handleSave">
+      <button :class="s.saveBtn()" data-tour="product-save" :disabled="saving || photoUploading" @click="handleSave">
         <span v-if="saving" :class="s.spinner()" />
         <span v-else>Сохранить товар</span>
       </button>

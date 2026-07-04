@@ -161,6 +161,87 @@ body,
   transition: background 300ms, color 300ms;
 }
 
+.store-builder-tour-popover {
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border-color);
+  border-radius: calc(var(--radius) + 6px);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+  max-width: 340px;
+}
+
+.store-builder-tour-popover .driver-popover-title,
+.store-builder-tour-popover .driver-popover-description,
+.store-builder-tour-popover .driver-popover-progress-text,
+.store-builder-tour-popover .driver-popover-close-btn {
+  font-family: 'Manrope', sans-serif;
+}
+
+.store-builder-tour-popover .driver-popover-title {
+  color: var(--text);
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.store-builder-tour-popover .driver-popover-description {
+  color: var(--text-sub);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.store-builder-tour-popover .driver-popover-progress-text {
+  color: var(--text-sub);
+}
+
+.store-builder-tour-popover .driver-popover-footer-btn {
+  color: var(--text);
+  background: var(--surface-alt);
+  border: 1px solid var(--border-color);
+  border-radius: var(--btn-radius);
+  padding: 7px 12px;
+  font-family: 'Manrope', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.store-builder-tour-popover .driver-popover-footer-btn:hover,
+.store-builder-tour-popover .driver-popover-footer-btn:focus {
+  background: var(--surface-alt);
+  border-color: rgba(var(--accent-rgb), 0.3);
+}
+
+.store-builder-tour-popover .driver-popover-next-btn,
+.store-builder-tour-popover .driver-popover-done-btn {
+  color: #fff;
+  background: var(--accent);
+  border-color: var(--accent);
+  text-shadow: none;
+}
+
+.store-builder-tour-popover .driver-popover-next-btn:hover,
+.store-builder-tour-popover .driver-popover-next-btn:focus,
+.store-builder-tour-popover .driver-popover-done-btn:hover,
+.store-builder-tour-popover .driver-popover-done-btn:focus {
+  background: var(--accent);
+  filter: brightness(0.97);
+}
+
+.store-builder-tour-popover .driver-popover-arrow-side-left {
+  border-left-color: var(--surface);
+}
+
+.store-builder-tour-popover .driver-popover-arrow-side-right {
+  border-right-color: var(--surface);
+}
+
+.store-builder-tour-popover .driver-popover-arrow-side-top {
+  border-top-color: var(--surface);
+}
+
+.store-builder-tour-popover .driver-popover-arrow-side-bottom {
+  border-bottom-color: var(--surface);
+}
+
 /* ── Keyframes ── */
 @keyframes fadeSlideIn {
   from {

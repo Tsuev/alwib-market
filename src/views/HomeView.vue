@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onBeforeUnmount, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { tv } from 'tailwind-variants'
 import InputText from 'primevue/inputtext'
@@ -18,6 +18,7 @@ import SubscriptionSuccessDialog from '@/components/storeBuilder/SubscriptionSuc
 import { FREE_THEME_IDS } from '@/constants/constants'
 import { clearPendingCheckout, getPendingCheckout } from '@/services/subscriptionService'
 import type { Product } from '@/types/types'
+import { useStoreBuilderTour } from '@/composables/useStoreBuilderTour'
 
 const router = useRouter()
 const route = useRoute()
@@ -55,6 +56,8 @@ const styles = tv({
       'inline-flex items-center px-3 py-1.5 rounded-[var(--btn-radius)] text-xs font-semibold text-[var(--text)] bg-[var(--surface-alt)] border border-[var(--border-color)] max-w-[140px] sm:max-w-[220px] truncate transition-[background,border-color] duration-300',
     supportLink:
       'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--btn-radius)] text-xs font-semibold text-[var(--text-sub)] hover:text-[var(--accent)] hover:bg-[var(--surface-alt)] transition-[color,background] duration-[180ms]',
+    guideBtn:
+      'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--btn-radius)] text-xs font-semibold text-[var(--text-sub)] hover:text-[var(--text)] hover:bg-[var(--surface-alt)] transition-[color,background] duration-[180ms] border-0 bg-transparent cursor-pointer',
     logoutBtn:
       'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--btn-radius)] text-xs font-semibold text-[var(--text-sub)] hover:text-[#E85D47] hover:bg-[#E85D4712] transition-[color,background] duration-[180ms] border-0 bg-transparent cursor-pointer',
     themeTabs:
@@ -131,13 +134,30 @@ const { supabase } = useSupabase()
 
 const s = styles()
 
+function closeProductDialog() {
+  showModal.value = false
+  editProduct.value = null
+}
+
+const { startTour, maybeStartTour, destroyTour } = useStoreBuilderTour({
+  openProductDialog: openAdd,
+  closeProductDialog,
+})
+
 onMounted(async () => {
   const session = await getSession()
   if (session) {
     userEmailLabel.value = session.user.email?.split('@')[0] || session.user.email || ''
     await store.loadData(session.user.id)
     await resolvePendingSubscription(session.user.id)
+    if (!showSubscriptionSuccessDialog.value) {
+      await maybeStartTour()
+    }
   }
+})
+
+onBeforeUnmount(() => {
+  destroyTour()
 })
 
 function sleep(ms: number): Promise<void> {
@@ -380,6 +400,14 @@ async function handleSignOut() {
             </svg>
             Поддержка
           </a>
+          <button :class="s.guideBtn()" @click="startTour">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M9.09 9a3 3 0 1 1 5.82 1c0 2-3 3-3 3" />
+              <line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
+            Инструкция
+          </button>
           <button
             :class="[s.planBadge(), store.isPro ? s.planBadgePro() : s.planBadgeFree()]"
             @click="showPlanDialog = true"
@@ -423,7 +451,7 @@ async function handleSignOut() {
 
           <div :class="s.formGroup()">
             <label :class="s.label()">Тема</label>
-            <div :class="s.themeTabs()">
+            <div :class="s.themeTabs()" data-tour="theme-tabs">
               <button
                 v-for="theme in THEMES"
                 :key="theme.id"
@@ -450,7 +478,7 @@ async function handleSignOut() {
 
           <div :class="s.formGroup()">
             <label :class="[s.label(), 'flex justify-center']">Логотип магазина</label>
-            <div :class="s.storeLogo()">
+            <div :class="s.storeLogo()" data-tour="store-logo">
             <UploadZone
               :modelValue="store.storeData.photo"
               :uploading="bannerUploading"
@@ -462,22 +490,24 @@ async function handleSignOut() {
 
           <div :class="s.formGroup()">
             <label :class="s.label()">Название магазина</label>
-            <InputText
-              v-model="store.storeData.name"
-              placeholder="Например: Мастерская Берёзка"
-              :maxlength="60"
-              :pt="{
-                root: {
-                  class: [s.input(), nameError && s.inputInvalid()],
-                },
-              }"
-              @input="nameError = ''"
-              @blur="
-                store.storeData.name.trim().length < 3 && store.storeData.name.length > 0
-                  ? (nameError = 'Минимум 3 символа')
-                  : undefined
-              "
-            />
+            <div data-tour="store-name">
+              <InputText
+                v-model="store.storeData.name"
+                placeholder="Например: Мастерская Берёзка"
+                :maxlength="60"
+                :pt="{
+                  root: {
+                    class: [s.input(), nameError && s.inputInvalid()],
+                  },
+                }"
+                @input="nameError = ''"
+                @blur="
+                  store.storeData.name.trim().length < 3 && store.storeData.name.length > 0
+                    ? (nameError = 'Минимум 3 символа')
+                    : undefined
+                "
+              />
+            </div>
             <div :class="s.inputMeta()">
               <span v-if="nameError" :class="s.fieldError()">{{ nameError }}</span>
               <span :class="s.charCount()">{{ store.storeData.name.length }}/60</span>
@@ -487,7 +517,7 @@ async function handleSignOut() {
           <!-- Domain field -->
           <div :class="s.formGroup()">
             <label :class="s.label()">Адрес магазина</label>
-            <div :class="[s.domainWrap(), domainFocused && s.domainWrapFocus(), domainError && 'border-[#E85D47]']">
+            <div :class="[s.domainWrap(), domainFocused && s.domainWrapFocus(), domainError && 'border-[#E85D47]']" data-tour="store-domain">
               <span :class="s.domainPrefix()">alwib.ru/</span>
               <input
                 :class="s.domainInput()"
@@ -534,22 +564,24 @@ async function handleSignOut() {
           <!-- Contacts -->
           <div :class="s.formGroup()">
             <label :class="s.label()">WhatsApp</label>
-            <InputMask
-              v-model="store.storeData.whatsapp"
-              mask="+7 (999) 999-99-99"
-              placeholder="+7 (999) 999-99-99"
-              :pt="{
-                root: { class: [s.input(), whatsappError && s.inputInvalid()] },
-              }"
-              @blur="whatsappError = validateWhatsapp(store.storeData.whatsapp) ? '' : 'Введите корректный номер'"
-              @input="whatsappError = ''; contactError = ''"
-            />
+            <div data-tour="store-whatsapp">
+              <InputMask
+                v-model="store.storeData.whatsapp"
+                mask="+7 (999) 999-99-99"
+                placeholder="+7 (999) 999-99-99"
+                :pt="{
+                  root: { class: [s.input(), whatsappError && s.inputInvalid()] },
+                }"
+                @blur="whatsappError = validateWhatsapp(store.storeData.whatsapp) ? '' : 'Введите корректный номер'"
+                @input="whatsappError = ''; contactError = ''"
+              />
+            </div>
             <div v-if="whatsappError" :class="s.fieldError()">{{ whatsappError }}</div>
           </div>
 
           <div :class="s.formGroup()">
             <label :class="s.label()">Telegram</label>
-            <div v-if="!store.isPro" class="relative">
+            <div v-if="!store.isPro" class="relative" data-tour="store-telegram">
               <InputText
                 disabled
                 placeholder="@username"
@@ -560,13 +592,14 @@ async function handleSignOut() {
                 @click="showPlanDialog = true"
               />
             </div>
-            <InputText
-              v-else
-              v-model="store.storeData.telegram"
-              placeholder="@username"
-              :pt="{ root: { class: s.input() } }"
-              @input="contactError = ''"
-            />
+            <div v-else data-tour="store-telegram">
+              <InputText
+                v-model="store.storeData.telegram"
+                placeholder="@username"
+                :pt="{ root: { class: s.input() } }"
+                @input="contactError = ''"
+              />
+            </div>
             <p v-if="!store.isPro" :class="s.lockedHint()">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
               Доступно на тарифе
@@ -583,7 +616,7 @@ async function handleSignOut() {
               Товары
               <span :class="s.countBadge()">{{ store.products.length }}</span>
             </h2>
-            <button :class="s.addBtn()" @click="openAdd">
+            <button :class="s.addBtn()" data-tour="add-product" @click="openAdd">
               <svg
                 width="14"
                 height="14"
@@ -631,7 +664,7 @@ async function handleSignOut() {
 
     <!-- Footer -->
     <footer :class="s.footer()">
-      <button :class="s.previewBtn()" @click="router.push('/preview')">
+      <button :class="s.previewBtn()" data-tour="preview-store" @click="router.push('/preview')">
         <svg
           width="15"
           height="15"
@@ -645,7 +678,7 @@ async function handleSignOut() {
         </svg>
         Превью
       </button>
-      <button :class="s.publishBtn()" :disabled="store.saving" @click="handlePublish">
+      <button :class="s.publishBtn()" data-tour="publish-store" :disabled="store.saving" @click="handlePublish">
         <span v-if="store.saving" :class="s.publishSpinner()" />
         <span v-else>Опубликовать</span>
       </button>
@@ -656,7 +689,7 @@ async function handleSignOut() {
   <ProductFormDialog
     v-if="showModal"
     :product="editProduct"
-    @close="showModal = false; editProduct = null"
+    @close="closeProductDialog"
   />
 
   <!-- Plan modal -->
