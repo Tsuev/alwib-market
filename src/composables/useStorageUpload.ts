@@ -117,7 +117,7 @@ export async function preparePhotoForUpload(file: File): Promise<File> {
 export async function uploadPhoto(
   file: File,
   userId: string,
-  prefix: 'store' | 'product',
+  prefix: 'store' | 'product' | 'banner',
 ): Promise<string> {
   const prepared = await preparePhotoForUpload(file)
   const contentType = prepared.type || 'image/jpeg'

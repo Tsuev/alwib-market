@@ -53,6 +53,7 @@ export interface Database {
           slug: string | null
           description: string | null
           logo_url: string | null
+          banner_url: string | null
           theme: string | null
           whatsapp: string | null
           telegram: string | null
@@ -67,6 +68,7 @@ export interface Database {
           slug?: string | null
           description?: string | null
           logo_url?: string | null
+          banner_url?: string | null
           theme?: string | null
           whatsapp?: string | null
           telegram?: string | null
@@ -81,6 +83,7 @@ export interface Database {
           slug?: string | null
           description?: string | null
           logo_url?: string | null
+          banner_url?: string | null
           theme?: string | null
           whatsapp?: string | null
           telegram?: string | null

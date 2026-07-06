@@ -2,7 +2,21 @@
 import { ref } from 'vue'
 import { tv } from 'tailwind-variants'
 
-const props = defineProps<{ modelValue: string | null; uploading?: boolean }>()
+const props = withDefaults(defineProps<{
+  modelValue: string | null
+  uploading?: boolean
+  aspect?: 'square' | 'banner'
+  imageClass?: string
+  title?: string
+  accentText?: string
+  hint?: string
+}>(), {
+  aspect: 'square',
+  imageClass: 'object-cover',
+  title: 'Загрузите изображение или',
+  accentText: 'выберите файл',
+  hint: 'JPG, PNG, WebP, HEIC · исходник до 20 MB',
+})
 const emit = defineEmits<{
   'update:modelValue': [value: string | null]
   change: [file: File]
@@ -14,7 +28,9 @@ const fileInput = ref<HTMLInputElement | null>(null)
 
 const styles = tv({
   slots: {
-    root: 'border-2 border-dashed border-[var(--border-color)] rounded-[var(--radius)] overflow-hidden cursor-pointer transition-[border-color,background] duration-200 aspect-square w-full max-w-[320px] bg-[var(--surface)]',
+    root: 'border-2 border-dashed border-[var(--border-color)] rounded-[var(--radius)] overflow-hidden cursor-pointer transition-[border-color,background] duration-200 w-full bg-[var(--surface)]',
+    rootSquare: 'aspect-square max-w-[320px]',
+    rootBanner: 'aspect-[16/9] max-w-[720px]',
     rootDragging: 'border-[var(--accent)] bg-[rgba(var(--accent-rgb),_0.04)]',
     rootHovering: 'border-[var(--accent)] bg-[rgba(var(--accent-rgb),_0.04)]',
     rootHasPhoto: 'border-solid cursor-default',
@@ -22,7 +38,9 @@ const styles = tv({
     placeholderText: 'text-sm font-medium',
     placeholderAccent: 'text-[var(--accent)]',
     placeholderSmall: 'text-xs opacity-70',
-    preview: 'relative h-full bg-[var(--surface-alt)] rounded-full overflow-hidden',
+    preview: 'relative h-full bg-[var(--surface-alt)] overflow-hidden',
+    previewSquare: 'rounded-full',
+    previewBanner: 'rounded-[calc(var(--radius)-2px)]',
     previewImg: 'w-full h-full object-cover block',
     removeBtn:
       'absolute top-2.5 right-2.5 w-7 h-7 rounded-full bg-black/60 text-white text-base flex items-center justify-center opacity-0 transition-opacity duration-[180ms] hover:opacity-100',
@@ -36,6 +54,8 @@ const styles = tv({
 
 const {
   root,
+  rootSquare,
+  rootBanner,
   rootDragging,
   rootHovering,
   rootHasPhoto,
@@ -44,6 +64,8 @@ const {
   placeholderAccent,
   placeholderSmall,
   preview,
+  previewSquare,
+  previewBanner,
   previewImg,
   removeBtn,
   removeBtnVisible,
@@ -68,6 +90,7 @@ function onDrop(e: DragEvent) {
   <div
     :class="[
       root(),
+      props.aspect === 'banner' ? rootBanner() : rootSquare(),
       dragging && rootDragging(),
       hovering && !props.modelValue && rootHovering(),
       props.modelValue && rootHasPhoto(),
@@ -87,8 +110,8 @@ function onDrop(e: DragEvent) {
       @change="handleFile(($event.target as HTMLInputElement).files?.[0])"
     />
 
-    <div v-if="props.modelValue" :class="preview()">
-      <img :src="props.modelValue" alt="store" :class="previewImg()" />
+    <div v-if="props.modelValue" :class="[preview(), props.aspect === 'banner' ? previewBanner() : previewSquare()]">
+      <img :src="props.modelValue" alt="store" :class="[previewImg(), props.imageClass]" />
       <button
         :class="[removeBtn(), hovering && !props.uploading && removeBtnVisible()]"
         @click.stop="emit('update:modelValue', null)"
@@ -119,10 +142,10 @@ function onDrop(e: DragEvent) {
           <polyline points="21 15 16 10 5 21" />
         </svg>
         <p :class="placeholderText()">
-          Загрузите логотип 1:1 или
-          <span :class="placeholderAccent()">выберите файл</span>
+          {{ props.title }}
+          <span :class="placeholderAccent()">{{ props.accentText }}</span>
         </p>
-        <small :class="placeholderSmall()">JPG, PNG, WebP, HEIC · квадрат лучше всего · исходник до 20 MB</small>
+        <small :class="placeholderSmall()">{{ props.hint }}</small>
       </template>
     </div>
   </div>

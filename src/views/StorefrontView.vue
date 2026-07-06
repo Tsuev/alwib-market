@@ -68,6 +68,12 @@ const notFound = ref(false)
 const displayName = computed(() =>
   props.slug ? publicStoreData.value?.name ?? '' : store.storeData.name,
 )
+const displayDescription = computed(() =>
+  props.slug ? publicStoreData.value?.description ?? '' : store.storeData.description,
+)
+const displayBanner = computed(() =>
+  props.slug ? publicStoreData.value?.banner ?? null : store.storeData.banner,
+)
 const displayPhoto = computed(() =>
   props.slug ? publicStoreData.value?.photo ?? null : store.storeData.photo,
 )
@@ -183,16 +189,27 @@ const styles = tv({
     backBtn:
       'fixed top-4 left-4 z-[100] flex items-center gap-1.5 px-3.5 py-2 bg-[var(--surface)] border border-[var(--border-color)] rounded-full text-[13px] font-semibold text-[var(--text)] shadow-[0_2px_12px_rgba(0,0,0,0.1)] transition-all duration-[180ms] hover:shadow-[0_4px_16px_rgba(0,0,0,0.15)] stagger-in cursor-pointer',
     banner:
-      'relative min-h-[240px] overflow-hidden bg-gradient-to-br from-[rgba(var(--accent-rgb),_0.2)] to-[rgba(var(--accent-rgb),_0.05)]',
+      'relative h-[220px] sm:h-[280px] lg:h-[360px] overflow-hidden bg-gradient-to-br from-[rgba(var(--accent-rgb),_0.2)] to-[rgba(var(--accent-rgb),_0.05)]',
+    bannerHasPhoto: 'bg-[var(--surface-alt)]',
+    bannerBackdrop: 'absolute inset-0',
+    bannerBackdropImg: 'w-full h-full object-cover scale-[1.08] blur-[12px] opacity-40',
+    bannerMedia: 'absolute inset-0',
+    bannerImg: 'w-full h-full object-cover object-center',
     bannerOverlay:
       'absolute inset-0 bg-gradient-to-t from-black/40 to-transparent flex items-end px-6 sm:px-8 pb-7',
+    bannerOverlayPhoto:
+      'bg-[linear-gradient(90deg,rgba(8,6,3,0.84)_0%,rgba(8,6,3,0.56)_28%,rgba(8,6,3,0.14)_62%,rgba(8,6,3,0.1)_100%),linear-gradient(180deg,rgba(0,0,0,0.05)_0%,rgba(0,0,0,0.36)_100%)]',
     bannerHead: 'flex flex-col sm:flex-row sm:items-end gap-4 sm:gap-5',
+    bannerCopy:
+      'max-w-[560px] px-4 py-3 sm:px-5 sm:py-4 rounded-[24px] bg-black/28 backdrop-blur-[8px] border border-white/10 shadow-[0_12px_30px_rgba(0,0,0,0.2)]',
     logoFrame:
       'w-[96px] h-[96px] sm:w-[116px] sm:h-[116px] rounded-full border border-white/35 bg-white/90 shadow-[0_12px_36px_rgba(0,0,0,0.22)] overflow-hidden shrink-0',
     logoImg: 'w-full h-full object-cover',
     logoPlaceholder:
       'w-full h-full bg-white/80 text-[var(--accent)] text-2xl font-black flex items-center justify-center',
     bannerTitle: 'text-[26px] sm:text-[32px] font-extrabold text-white [text-shadow:0_1px_4px_rgba(0,0,0,0.3)] stagger-in',
+    bannerDescription:
+      'max-w-[680px] mt-2 text-[14px] sm:text-[15px] leading-6 text-white/92 [text-shadow:0_1px_3px_rgba(0,0,0,0.26)] stagger-in',
     bannerDomain: 'text-[13px] text-white/80 mt-1 stagger-in',
     stickyBar:
       'sticky top-0 z-50 bg-[var(--bg)] border-b border-transparent transition-[background,border-color,backdrop-filter] duration-200',
@@ -211,8 +228,15 @@ const styles = tv({
       'px-3.5 py-[5px] rounded-full text-xs font-semibold border-[1.5px] border-[var(--border-color)] text-[var(--text-sub)]  whitespace-nowrap transition-all duration-[180ms] hover:border-[var(--accent)] hover:text-[var(--accent)] hover:bg-[rgba(var(--accent-rgb),_0.06)] cursor-pointer',
     tagChipActive:
       'text-white hover:text-white hover:bg-[var(--accent)] bg-[var(--accent)] border-[var(--accent)]',
-    main: 'max-w-[1100px] mx-auto px-6 py-7 pb-[60px]',
+    main: 'max-w-[1100px] mx-auto px-6 py-7 pb-[96px]',
     grid: 'grid grid-store-cols gap-5',
+    footer:
+      'fixed w-full bottom-0 z-40 border-t border-[var(--border-color)] bg-[var(--surface)]/95 backdrop-blur-[10px] transition-[background,border-color] duration-300',
+    footerCard:
+      'max-w-[1100px] mx-auto px-6 py-3 flex items-center justify-center text-center',
+    footerMadeWith: 'text-[13px] text-[var(--text-sub)]',
+    footerMadeWithLink:
+      'text-[var(--accent)] font-semibold hover:opacity-80 transition-opacity duration-[180ms]',
     empty:
       'flex flex-col items-center gap-2.5 py-20 px-5 text-center text-[var(--text-sub)] fade-in',
     emptyTitle: 'text-lg font-semibold text-[var(--text)]',
@@ -265,9 +289,15 @@ const s = styles()
     </button>
 
     <!-- Store header -->
-    <div :class="s.banner()">
-      <div :class="s.bannerOverlay()">
-        <div :class="s.bannerHead()">
+    <div :class="[s.banner(), displayBanner && s.bannerHasPhoto()]">
+      <div v-if="displayBanner" :class="s.bannerBackdrop()">
+        <img :src="displayBanner" alt="" aria-hidden="true" :class="s.bannerBackdropImg()" />
+      </div>
+      <div v-if="displayBanner" :class="s.bannerMedia()">
+        <img :src="displayBanner" alt="Баннер магазина" :class="s.bannerImg()" />
+      </div>
+      <div :class="[s.bannerOverlay(), displayBanner && s.bannerOverlayPhoto()]">
+        <div :class="[s.bannerHead(), displayBanner && s.bannerCopy()]">
           <div :class="s.logoFrame()">
             <img
               v-if="displayPhoto"
@@ -281,6 +311,9 @@ const s = styles()
           </div>
           <div>
             <h1 :class="s.bannerTitle()">{{ displayName || 'Мой магазин' }}</h1>
+            <p v-if="displayDescription" :class="s.bannerDescription()">
+              {{ displayDescription }}
+            </p>
             <div v-if="displayDomain" :class="s.bannerDomain()">
               alwib.ru/{{ displayDomain }}
             </div>
@@ -374,6 +407,22 @@ const s = styles()
 
       <div ref="sentinelRef" style="height: 1px" />
     </div>
+
+    <footer :class="s.footer()">
+      <div :class="s.footerCard()">
+        <p :class="s.footerMadeWith()">
+          Сделано с помощью Alwib -
+          <a
+            :class="s.footerMadeWithLink()"
+            href="https://alwib.ru"
+            target="_blank"
+            rel="noreferrer"
+          >
+            онлайн витрина
+          </a>
+        </p>
+      </div>
+    </footer>
 
     <!-- Scroll to top -->
     <button

@@ -1,7 +1,7 @@
 import { nextTick } from 'vue'
 import { driver, type DriveStep, type Driver } from 'driver.js'
 
-const STORAGE_KEY = 'alwib-store-builder-tour-seen-v1'
+const STORAGE_KEY = 'alwib-store-builder-tour-seen-v2'
 const POPOVER_CLASS = 'store-builder-tour-popover'
 
 type StoreBuilderTourOptions = {
@@ -72,9 +72,19 @@ export function useStoreBuilderTour(options: StoreBuilderTourOptions) {
       },
     },
     {
+      element: '[data-tour="store-description"]',
+      popover: {
+        title: '4. Добавьте описание',
+        description:
+          'Коротко опишите магазин: что вы продаёте, для кого и в чём ценность. Этот текст будет показан в шапке витрины под названием.',
+        side: 'bottom',
+        align: 'start',
+      },
+    },
+    {
       element: '[data-tour="store-domain"]',
       popover: {
-        title: '4. Настройте адрес',
+        title: '5. Настройте адрес',
         description:
           'Задайте короткий адрес на латинице для ссылки вида `alwib.ru/ваш-магазин`. Система сразу проверяет, свободен ли он.',
         side: 'bottom',
@@ -84,7 +94,7 @@ export function useStoreBuilderTour(options: StoreBuilderTourOptions) {
     {
       element: '[data-tour="store-whatsapp"]',
       popover: {
-        title: '5. Добавьте WhatsApp',
+        title: '6. Добавьте WhatsApp',
         description:
           'Укажите номер WhatsApp, чтобы покупатели могли быстро написать вам из карточки товара.',
         side: 'top',
@@ -94,7 +104,7 @@ export function useStoreBuilderTour(options: StoreBuilderTourOptions) {
     {
       element: '[data-tour="store-telegram"]',
       popover: {
-        title: '6. Добавьте Telegram',
+        title: '7. Добавьте Telegram',
         description:
           'Если у вас тариф Pro, сюда можно добавить Telegram-аккаунт.',
         side: 'top',
@@ -104,7 +114,7 @@ export function useStoreBuilderTour(options: StoreBuilderTourOptions) {
     {
       element: '[data-tour="add-product"]',
       popover: {
-        title: '7. Перейдите к созданию товара',
+        title: '8. Перейдите к созданию товара',
         description:
           'Нажмите сюда, чтобы открыть форму товара. Внутри вы заполните карточку: фото, название, описание, цену и теги.',
         side: 'left',
@@ -118,7 +128,7 @@ export function useStoreBuilderTour(options: StoreBuilderTourOptions) {
     {
       element: '[data-tour="product-photo"]',
       popover: {
-        title: '8. Загрузите фото товара',
+        title: '9. Загрузите фото товара',
         description:
           'Первым делом добавьте фото. Хорошее изображение влияет на конверсию сильнее любой декоративной настройки.',
         side: 'right',
@@ -132,7 +142,7 @@ export function useStoreBuilderTour(options: StoreBuilderTourOptions) {
     {
       element: '[data-tour="product-name"]',
       popover: {
-        title: '9. Заполните название и описание',
+        title: '10. Заполните название и описание',
         description:
           'Название обязательно. Ниже можно кратко описать товар, чтобы покупателю было проще понять ценность предложения.',
         side: 'left',
@@ -142,7 +152,7 @@ export function useStoreBuilderTour(options: StoreBuilderTourOptions) {
     {
       element: '[data-tour="product-price"]',
       popover: {
-        title: '10. Укажите цену',
+        title: '11. Укажите цену',
         description:
           'Заполните основную цену и, при необходимости, цену со скидкой. Процент скидки посчитается автоматически.',
         side: 'left',
@@ -152,7 +162,7 @@ export function useStoreBuilderTour(options: StoreBuilderTourOptions) {
     {
       element: '[data-tour="product-tags"]',
       popover: {
-        title: '11. Добавьте теги и сохраните',
+        title: '12. Добавьте теги и сохраните',
         description:
           'Теги помогают быстро описать товар короткими маркерами, например вы можете написать бренд товара или какое-то свойство. После заполнения нажимайте кнопку сохранения.',
         side: 'top',
@@ -162,7 +172,7 @@ export function useStoreBuilderTour(options: StoreBuilderTourOptions) {
     {
       element: '[data-tour="product-save"]',
       popover: {
-        title: '12. Сохранение карточки',
+        title: '13. Сохранение карточки',
         description:
           'Эта кнопка создаёт товар и добавляет его в витрину. Вы можете это сделать позже.',
         side: 'top',
@@ -176,7 +186,7 @@ export function useStoreBuilderTour(options: StoreBuilderTourOptions) {
     {
       element: '[data-tour="preview-store"]',
       popover: {
-        title: '13. Проверьте магазин в превью',
+        title: '14. Проверьте магазин в превью',
         description:
           'Перед публикацией откройте превью и посмотрите, как тема, логотип, контакты и товары выглядят для покупателя.',
         side: 'top',
@@ -190,7 +200,7 @@ export function useStoreBuilderTour(options: StoreBuilderTourOptions) {
     {
       element: '[data-tour="publish-store"]',
       popover: {
-        title: '14. Опубликуйте магазин',
+        title: '15. Опубликуйте магазин',
         description:
           'Когда всё готово, нажмите "Опубликовать". Магазин сохранится и станет доступен по вашему адресу.',
         side: 'top',

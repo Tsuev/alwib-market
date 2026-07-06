@@ -62,7 +62,7 @@ const styles = tv({
     photoBtn: 'flex items-center justify-center gap-1.5 w-full py-[9px] text-xs font-semibold text-[var(--text-sub)] bg-[var(--surface-alt)] border-t border-[var(--border-color)] cursor-pointer transition-[background,color] duration-[180ms] hover:bg-[rgba(var(--accent-rgb),_0.08)] hover:text-[var(--accent)]',
     photoBtnDisabled: 'opacity-50 pointer-events-none',
     formCol: 'flex flex-col',
-    label: 'block text-[11px] font-bold text-[var(--text-sub)] uppercase tracking-[.07em] mb-2',
+    label: 'block text-[13px] sm:text-[14px] font-extrabold text-[var(--text)] uppercase tracking-[.08em] mb-2.5',
     req: 'text-[var(--accent)]',
     input: 'w-full px-3.5 py-2.5 border border-[var(--border-color)] rounded-[var(--radius)] text-sm text-[var(--text)] bg-[var(--surface)] transition-[border-color,box-shadow] duration-[180ms] focus:border-[var(--accent)] focus:shadow-[0_0_0_3px_rgba(var(--accent-rgb),_0.12)] outline-none',
     inputInvalid: 'border-[#E85D47]',

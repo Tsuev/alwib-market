@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { tv } from 'tailwind-variants'
 import InputText from 'primevue/inputtext'
 import InputMask from 'primevue/inputmask'
+import Textarea from 'primevue/textarea'
 import { useToast } from 'primevue/usetoast'
 import { useSupabase } from '@/composables/useSupabase'
 import { useStoreBuilderStore } from '@/stores/storeBuilder'
@@ -34,7 +35,8 @@ const showPlanDialog = ref(false)
 const editProduct = ref<Product | null>(null)
 const domainStatus = ref<'idle' | 'checking' | 'available' | 'taken'>('idle')
 const domainFocused = ref(false)
-const bannerUploading = ref(false)
+const logoUploading = ref(false)
+const coverUploading = ref(false)
 const copied = ref(false)
 const userEmailLabel = ref('')
 const showSubscriptionSuccessDialog = ref(false)
@@ -81,7 +83,7 @@ const styles = tv({
     formGroup: 'mb-5',
     storeLogo: 'flex justify-center',
     label:
-      'block text-[11px] font-bold text-[var(--text-sub)] uppercase tracking-[.07em] mb-2',
+      'block text-[13px] sm:text-[14px] font-extrabold text-[var(--text)] uppercase tracking-[.08em] mb-2.5',
     input:
       'w-full px-3.5 py-2.5 border border-[var(--border-color)] rounded-[var(--radius)] text-base text-[var(--text)] bg-[var(--surface)] transition-[border-color,box-shadow,background,color] duration-[180ms] focus:border-[var(--accent)] focus:shadow-[0_0_0_3px_rgba(var(--accent-rgb),_0.12)] outline-none',
     inputInvalid: 'border-[#E85D47]',
@@ -211,7 +213,7 @@ async function clearSubscriptionQuery(): Promise<void> {
 async function handleBannerUpload(file: File) {
   const session = await getSession()
   if (!session) return
-  bannerUploading.value = true
+  logoUploading.value = true
   try {
     store.storeData.photo = await uploadPhoto(file, session.user.id, 'store')
     await store.publishStore()
@@ -223,7 +225,7 @@ async function handleBannerUpload(file: File) {
       life: 4000,
     })
   } finally {
-    bannerUploading.value = false
+    logoUploading.value = false
   }
 }
 
@@ -236,6 +238,39 @@ async function handleStorePhotoChange(value: string | null) {
       severity: 'error',
       summary: 'Ошибка сохранения',
       detail: err instanceof Error ? err.message : 'Не удалось сохранить фото магазина',
+      life: 4000,
+    })
+  }
+}
+
+async function handleStoreBannerUpload(file: File) {
+  const session = await getSession()
+  if (!session) return
+  coverUploading.value = true
+  try {
+    store.storeData.banner = await uploadPhoto(file, session.user.id, 'banner')
+    await store.publishStore()
+  } catch (err) {
+    toast.add({
+      severity: 'error',
+      summary: 'Ошибка загрузки',
+      detail: err instanceof Error ? err.message : 'Не удалось загрузить баннер',
+      life: 4000,
+    })
+  } finally {
+    coverUploading.value = false
+  }
+}
+
+async function handleStoreBannerChange(value: string | null) {
+  store.storeData.banner = value
+  try {
+    await store.publishStore()
+  } catch (err) {
+    toast.add({
+      severity: 'error',
+      summary: 'Ошибка сохранения',
+      detail: err instanceof Error ? err.message : 'Не удалось сохранить баннер магазина',
       life: 4000,
     })
   }
@@ -488,11 +523,33 @@ async function handleSignOut() {
             <div :class="s.storeLogo()" data-tour="store-logo">
             <UploadZone
               :modelValue="store.storeData.photo"
-              :uploading="bannerUploading"
+              :uploading="logoUploading"
+              title="Загрузите логотип 1:1 или"
+              hint="JPG, PNG, WebP, HEIC · квадрат лучше всего · исходник до 20 MB"
               @update:modelValue="handleStorePhotoChange"
               @change="handleBannerUpload"
             />
             </div>
+          </div>
+
+          <div :class="s.formGroup()">
+            <label :class="[s.label(), 'flex justify-center']">Баннер магазина</label>
+            <div :class="s.storeLogo()">
+              <UploadZone
+                :modelValue="store.storeData.banner"
+                :uploading="coverUploading"
+                aspect="banner"
+                imageClass="object-cover"
+                title="Загрузите широкий баннер 21:9 или"
+                hint="Рекомендуем 2520×1080 или 2560×1080 · WebP или JPG · до 20 MB"
+                @update:modelValue="handleStoreBannerChange"
+                @change="handleStoreBannerUpload"
+              />
+            </div>
+            <p :class="[s.fieldHint(), 'text-center']">
+              Лучше всего подходят широкие изображения 21:9. Оптимальный размер для витрины — 2560×1080.
+              Для максимального сжатия с минимальной потерей качества используйте WebP, запасной вариант — JPG.
+            </p>
           </div>
 
           <div :class="s.formGroup()">
@@ -518,6 +575,23 @@ async function handleSignOut() {
             <div :class="s.inputMeta()">
               <span v-if="nameError" :class="s.fieldError()">{{ nameError }}</span>
               <span :class="s.charCount()">{{ store.storeData.name.length }}/60</span>
+            </div>
+          </div>
+
+          <div :class="s.formGroup()">
+            <label :class="s.label()">Описание магазина</label>
+            <div data-tour="store-description">
+              <Textarea
+                v-model="store.storeData.description"
+                placeholder="Коротко расскажите, что вы продаёте и чем магазин полезен покупателю"
+                :rows="3"
+                :maxlength="160"
+                :pt="{ root: { class: s.input() + ' resize-none min-h-[88px]' } }"
+              />
+            </div>
+            <div :class="s.inputMeta()">
+              <span />
+              <span :class="s.charCount()">{{ store.storeData.description.length }}/160</span>
             </div>
           </div>
 

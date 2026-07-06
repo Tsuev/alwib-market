@@ -21,6 +21,7 @@ export interface StoreData {
   domain: string // maps to slug in DB
   description: string
   photo: string | null
+  banner: string | null
   whatsapp: string | null
   telegram: string | null
   plan: Plan

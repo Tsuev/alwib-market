@@ -10,6 +10,7 @@ const DEFAULT_STORE: StoreData = {
   domain: '',
   description: '',
   photo: null,
+  banner: null,
   whatsapp: null,
   telegram: null,
   plan: 'free',

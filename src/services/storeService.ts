@@ -10,6 +10,7 @@ interface DbStore {
   slug: string | null
   description: string | null
   logo_url: string | null
+  banner_url: string | null
   theme: string | null
   whatsapp: string | null
   telegram: string | null
@@ -25,6 +26,7 @@ function fromDb(row: DbStore): StoreData & { id: number; theme: string } {
     domain: row.slug || '',
     description: row.description || '',
     photo: row.logo_url || null,
+    banner: row.banner_url || null,
     theme: row.theme || 'minimal',
     whatsapp: row.whatsapp || null,
     telegram: row.telegram || null,
@@ -79,6 +81,7 @@ export async function saveStore(
     slug: data.domain || null,
     description: data.description || null,
     logo_url: data.photo || null,
+    banner_url: data.banner || null,
     theme,
     whatsapp: data.whatsapp || null,
     telegram: data.telegram || null,
