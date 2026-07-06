@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, onBeforeUnmount, onMounted } from 'vue'
+import { ref, watch, onBeforeUnmount, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { tv } from 'tailwind-variants'
+import { useTippy } from 'vue-tippy'
 import InputText from 'primevue/inputtext'
 import InputMask from 'primevue/inputmask'
 import Textarea from 'primevue/textarea'
@@ -40,8 +41,10 @@ const coverUploading = ref(false)
 const copied = ref(false)
 const userEmailLabel = ref('')
 const showSubscriptionSuccessDialog = ref(false)
+const publishButtonRef = ref<HTMLElement | null>(null)
 let domainTimer: ReturnType<typeof setTimeout> | null = null
 let domainRequestId = 0
+let publishHintTimer: ReturnType<typeof setTimeout> | null = null
 const viewsFormatter = new Intl.NumberFormat('ru-RU')
 
 const styles = tv({
@@ -117,7 +120,9 @@ const styles = tv({
     previewBtn:
       'inline-flex items-center justify-center gap-[7px] px-4 py-2.5 text-sm font-medium text-[var(--text-sub)] rounded-[var(--btn-radius)] hover:text-[var(--text)] hover:bg-[var(--surface-alt)] transition-[color,background] duration-[180ms] border-0 bg-transparent cursor-pointer w-full sm:w-auto',
     publishBtn:
-      'inline-flex items-center justify-center gap-2 px-[22px] py-2.5 bg-[var(--accent)] text-white rounded-[var(--btn-radius)] text-sm font-semibold hover:opacity-85 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed transition-[opacity,transform] duration-[180ms] border-0 cursor-pointer w-full sm:w-auto',
+      'inline-flex items-center justify-center gap-2 px-[22px] py-2.5 bg-[var(--accent)] text-white rounded-[var(--btn-radius)] text-sm font-semibold hover:opacity-85 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed transition-[opacity,transform,box-shadow] duration-[180ms] border-0 cursor-pointer w-full sm:w-auto',
+    publishBtnGlow:
+      'shadow-[0_0_0_3px_rgba(var(--accent-rgb),_0.2),0_0_20px_rgba(var(--accent-rgb),_0.45),0_10px_28px_rgba(var(--accent-rgb),_0.3)] animate-[publishPulse_1.8s_ease-in-out_infinite]',
     publishSpinner:
       'w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin inline-block',
     copyBtn:
@@ -135,6 +140,17 @@ const styles = tv({
 const { supabase } = useSupabase()
 
 const s = styles()
+const publishTippy = useTippy(publishButtonRef, {
+  trigger: 'manual',
+  content: 'После изменений нужно<br>опубликовать магазин',
+  allowHTML: true,
+  placement: 'top',
+  offset: [0, 12],
+  maxWidth: 220,
+  theme: 'publish-hint',
+  arrow: true,
+  duration: [180, 120],
+})
 
 function closeProductDialog() {
   showModal.value = false
@@ -160,7 +176,32 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   destroyTour()
+  if (publishHintTimer) clearTimeout(publishHintTimer)
+  publishTippy.hide()
 })
+
+watch(
+  () => store.hasUnpublishedChanges,
+  (hasChanges, hadChanges) => {
+    if (publishHintTimer) {
+      clearTimeout(publishHintTimer)
+      publishHintTimer = null
+    }
+
+    if (hasChanges && !hadChanges) {
+      publishTippy.show()
+      publishHintTimer = setTimeout(() => {
+        publishTippy.hide()
+        publishHintTimer = null
+      }, 5000)
+      return
+    }
+
+    if (!hasChanges) {
+      publishTippy.hide()
+    }
+  },
+)
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
@@ -759,7 +800,13 @@ async function handleSignOut() {
         </svg>
         Превью
       </button>
-      <button :class="s.publishBtn()" data-tour="publish-store" :disabled="store.saving" @click="handlePublish">
+      <button
+        ref="publishButtonRef"
+        :class="[s.publishBtn(), store.hasUnpublishedChanges && !store.saving && s.publishBtnGlow()]"
+        data-tour="publish-store"
+        :disabled="store.saving"
+        @click="handlePublish"
+      >
         <span v-if="store.saving" :class="s.publishSpinner()" />
         <span v-else>Опубликовать</span>
       </button>
@@ -783,6 +830,41 @@ async function handleSignOut() {
 </template>
 
 <style lang="scss" scoped>
+@keyframes publishPulse {
+  0%, 100% {
+    box-shadow:
+      0 0 0 3px rgba(var(--accent-rgb), 0.2),
+      0 0 20px rgba(var(--accent-rgb), 0.3),
+      0 10px 28px rgba(var(--accent-rgb), 0.2);
+  }
+
+  50% {
+    box-shadow:
+      0 0 0 5px rgba(var(--accent-rgb), 0.28),
+      0 0 30px rgba(var(--accent-rgb), 0.5),
+      0 14px 36px rgba(var(--accent-rgb), 0.3);
+  }
+}
+
+:deep(.tippy-box[data-theme~='publish-hint']) {
+  background: var(--text);
+  color: var(--bg);
+  border-radius: 14px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.35;
+  text-align: center;
+}
+
+:deep(.tippy-box[data-theme~='publish-hint'] .tippy-content) {
+  padding: 8px 12px;
+}
+
+:deep(.tippy-box[data-theme~='publish-hint'] .tippy-arrow) {
+  color: var(--text);
+}
+
 /* Hide scrollbar on theme tabs row */
 .overflow-x-auto::-webkit-scrollbar {
   display: none;

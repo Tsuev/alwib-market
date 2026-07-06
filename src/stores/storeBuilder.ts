@@ -24,6 +24,35 @@ export const useStoreBuilderStore = defineStore('storeBuilder', () => {
   const loading = ref(false)
   const saving = ref(false)
   const userId = ref<string | null>(null)
+  const lastPublishedSnapshot = ref('')
+
+  function buildSnapshot(): string {
+    return JSON.stringify({
+      theme: theme.value,
+      store: {
+        name: storeData.value.name,
+        domain: storeData.value.domain,
+        description: storeData.value.description,
+        photo: storeData.value.photo,
+        banner: storeData.value.banner,
+        whatsapp: storeData.value.whatsapp,
+        telegram: storeData.value.telegram,
+      },
+      products: products.value.map((product) => ({
+        id: product.id,
+        name: product.name,
+        description: product.description,
+        price: product.price,
+        salePrice: product.salePrice,
+        photo: product.photo,
+        tags: [...product.tags],
+      })),
+    })
+  }
+
+  function syncPublishedSnapshot(): void {
+    lastPublishedSnapshot.value = buildSnapshot()
+  }
 
   async function loadData(uid: string): Promise<void> {
     userId.value = uid
@@ -41,6 +70,7 @@ export const useStoreBuilderStore = defineStore('storeBuilder', () => {
       theme.value = storeTheme
       applyTheme(storeTheme)
       products.value = await loadProducts(store.id)
+      syncPublishedSnapshot()
     } finally {
       loading.value = false
     }
@@ -54,6 +84,7 @@ export const useStoreBuilderStore = defineStore('storeBuilder', () => {
       const { theme: savedTheme, ...rest } = saved
       storeData.value = rest
       theme.value = savedTheme
+      syncPublishedSnapshot()
     } finally {
       saving.value = false
     }
@@ -64,6 +95,7 @@ export const useStoreBuilderStore = defineStore('storeBuilder', () => {
     applyTheme(t)
     if (storeData.value.id) {
       await dbUpdateTheme(storeData.value.id, t)
+      syncPublishedSnapshot()
     }
   }
 
@@ -83,14 +115,18 @@ export const useStoreBuilderStore = defineStore('storeBuilder', () => {
     } else {
       products.value.unshift(saved)
     }
+
+    syncPublishedSnapshot()
   }
 
   async function deleteProduct(id: string): Promise<void> {
     await removeProduct(id)
     products.value = products.value.filter((p) => p.id !== id)
+    syncPublishedSnapshot()
   }
 
   const isPro = computed(() => storeData.value.plan === 'pro')
+  const hasUnpublishedChanges = computed(() => buildSnapshot() !== lastPublishedSnapshot.value)
 
   return {
     theme,
@@ -99,6 +135,7 @@ export const useStoreBuilderStore = defineStore('storeBuilder', () => {
     loading,
     saving,
     isPro,
+    hasUnpublishedChanges,
     loadData,
     publishStore,
     setTheme,

@@ -1,5 +1,6 @@
 import './assets/main.css'
 import 'driver.js/dist/driver.css'
+import 'tippy.js/dist/tippy.css'
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
