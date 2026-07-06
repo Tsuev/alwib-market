@@ -15,6 +15,21 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, content-type',
 }
 
+function parseStoreId(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isInteger(value) && value > 0) {
+    return value
+  }
+
+  if (typeof value === 'string') {
+    const normalized = Number(value.trim())
+    if (Number.isInteger(normalized) && normalized > 0) {
+      return normalized
+    }
+  }
+
+  return null
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
@@ -25,10 +40,7 @@ Deno.serve(async (req) => {
   try {
     const body = await req.json()
     slug = typeof body.slug === 'string' ? body.slug.toLowerCase().trim() : undefined
-    currentStoreId =
-      typeof body.currentStoreId === 'number' && Number.isInteger(body.currentStoreId)
-        ? body.currentStoreId
-        : null
+    currentStoreId = parseStoreId(body.currentStoreId)
   } catch {
     return Response.json({ available: false, reason: 'invalid' }, { headers: corsHeaders })
   }
@@ -68,7 +80,7 @@ Deno.serve(async (req) => {
     .select('id')
     .eq('slug', slug)
 
-  if (currentStoreId) {
+  if (currentStoreId !== null) {
     query = query.neq('id', currentStoreId)
   } else if (currentUserId) {
     query = query.neq('user_id', currentUserId)

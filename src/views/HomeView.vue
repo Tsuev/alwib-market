@@ -267,7 +267,14 @@ function handleDomainInput(e: Event) {
 }
 
 async function checkSlugAvailable(slug: string): Promise<boolean | null> {
+  const { data: sessionData } = await supabase.auth.getSession()
+  const accessToken = sessionData.session?.access_token
   const { data, error } = await supabase.functions.invoke('check-slug', {
+    headers: accessToken
+      ? {
+          Authorization: `Bearer ${accessToken}`,
+        }
+      : undefined,
     body: {
       slug,
       currentStoreId: store.storeData.id ?? null,
