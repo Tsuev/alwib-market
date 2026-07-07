@@ -95,12 +95,21 @@ const ready = ref(false)
 const search = ref('')
 const debouncedSearch = refDebounced(search, 300)
 const activeTag = ref<string | null>(null)
+const mobileGridMode = ref<'single' | 'double'>('single')
 const selectedProduct = ref<Product | null>(null)
 const scrollRef = ref<HTMLElement | null>(null)
 const sticky = ref(false)
 const showTop = ref(false)
+const isMobileViewport = ref(false)
 
 let observer: IntersectionObserver | null = null
+let mobileMediaQuery: MediaQueryList | null = null
+
+const MOBILE_GRID_STORAGE_KEY = 'alwib-storefront-mobile-grid'
+
+function syncMobileViewport() {
+  isMobileViewport.value = mobileMediaQuery?.matches ?? false
+}
 
 onMounted(async () => {
   if (props.slug) {
@@ -131,6 +140,14 @@ onMounted(async () => {
     loading.value = false
   }
 
+  mobileMediaQuery = window.matchMedia('(max-width: 540px)')
+  syncMobileViewport()
+  const savedGridMode = localStorage.getItem(MOBILE_GRID_STORAGE_KEY)
+  if (savedGridMode === 'single' || savedGridMode === 'double') {
+    mobileGridMode.value = savedGridMode
+  }
+  mobileMediaQuery.addEventListener('change', syncMobileViewport)
+
   observer = new IntersectionObserver(
     (entries) => {
       if (entries[0].isIntersecting && hasMore.value) {
@@ -144,6 +161,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   observer?.disconnect()
+  mobileMediaQuery?.removeEventListener('change', syncMobileViewport)
 })
 
 const allTags = computed(() => [...new Set(displayProducts.value.flatMap((p) => p.tags))])
@@ -183,6 +201,20 @@ function onScroll() {
   showTop.value = el.scrollTop > 300
 }
 
+function setMobileGridMode(mode: 'single' | 'double') {
+  mobileGridMode.value = mode
+  localStorage.setItem(MOBILE_GRID_STORAGE_KEY, mode)
+}
+
+const isCompactGrid = computed(() => isMobileViewport.value && mobileGridMode.value === 'double')
+const gridStyle = computed(() => {
+  if (!isMobileViewport.value) return undefined
+  return {
+    gridTemplateColumns: `repeat(${mobileGridMode.value === 'double' ? 2 : 1}, minmax(0, 1fr))`,
+    gap: mobileGridMode.value === 'double' ? '0.75rem' : '1.25rem',
+  }
+})
+
 const styles = tv({
   slots: {
     wrap: 'relative h-screen overflow-y-auto bg-[var(--bg)] transition-[background] duration-300',
@@ -216,6 +248,7 @@ const styles = tv({
     stickyBarScrolled:
       'bg-[var(--bg)]/88 backdrop-blur-[12px] border-b-[var(--border-color)]',
     stickyInner: 'max-w-[1100px] mx-auto px-6 py-3.5 flex flex-col gap-2.5',
+    controlsRow: 'flex flex-col gap-2 sm:gap-2.5',
     searchWrap: 'relative',
     searchIcon:
       'absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-sub)] pointer-events-none',
@@ -224,6 +257,10 @@ const styles = tv({
     searchClear:
       'absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-sub)] flex items-center p-[3px] transition-[color] duration-[180ms] hover:text-[var(--text)] fade-in cursor-pointer border-0 bg-transparent',
     tagRow: 'flex gap-1.5 overflow-x-auto pb-0.5',
+    mobileViewSwitcher: 'flex items-center justify-between gap-3 min-[541px]:hidden',
+    mobileViewLabel: 'text-[12px] font-semibold text-[var(--text-sub)]',
+    mobileViewBtn:
+      'inline-flex items-center justify-center w-10 h-10 rounded-full border border-[var(--border-color)] bg-[var(--surface)] text-[var(--text)] transition-[border-color,background,color,transform] duration-[180ms] cursor-pointer hover:border-[var(--accent)] hover:text-[var(--accent)] active:scale-[0.97]',
     tagChip:
       'px-3.5 py-[5px] rounded-full text-xs font-semibold border-[1.5px] border-[var(--border-color)] text-[var(--text-sub)]  whitespace-nowrap transition-all duration-[180ms] hover:border-[var(--accent)] hover:text-[var(--accent)] hover:bg-[rgba(var(--accent-rgb),_0.06)] cursor-pointer',
     tagChipActive:
@@ -325,37 +362,77 @@ const s = styles()
     <!-- Sticky search + filter -->
     <div :class="[s.stickyBar(), sticky && s.stickyBarScrolled()]">
       <div :class="s.stickyInner()">
-        <div :class="s.searchWrap()">
-          <svg
-            :class="s.searchIcon()"
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <circle cx="11" cy="11" r="8" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" />
-          </svg>
-          <input
-            v-model="search"
-            :class="s.searchInput()"
-            placeholder="Найти товар…"
-          />
-          <button v-if="search" :class="s.searchClear()" @click="search = ''">
+        <div :class="s.controlsRow()">
+          <div :class="s.searchWrap()">
             <svg
-              width="14"
-              height="14"
+              :class="s.searchIcon()"
+              width="16"
+              height="16"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
               stroke-width="2"
             >
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
-          </button>
+            <input
+              v-model="search"
+              :class="s.searchInput()"
+              placeholder="Найти товар…"
+            />
+            <button v-if="search" :class="s.searchClear()" @click="search = ''">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
+
+          <div v-if="isMobileViewport" :class="s.mobileViewSwitcher()">
+            <span :class="s.mobileViewLabel()">Вид товаров</span>
+            <button
+              :class="s.mobileViewBtn()"
+              :aria-label="mobileGridMode === 'double' ? 'Переключить на 1 товар в строке' : 'Переключить на 2 товара в строке'"
+              :title="mobileGridMode === 'double' ? '1 товар в строке' : '2 товара в строке'"
+              @click="setMobileGridMode(mobileGridMode === 'double' ? 'single' : 'double')"
+            >
+              <svg
+                v-if="mobileGridMode === 'double'"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <rect x="4" y="5" width="16" height="14" rx="2" />
+                <line x1="12" y1="5" x2="12" y2="19" />
+              </svg>
+              <svg
+                v-else
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <rect x="5" y="5" width="14" height="14" rx="2" />
+              </svg>
+            </button>
+          </div>
         </div>
 
         <div :class="s.tagRow()">
@@ -395,12 +472,13 @@ const s = styles()
         <small :class="s.emptySmall()">Попробуйте другой запрос или тег</small>
       </div>
 
-      <div v-else :class="s.grid()">
+      <div v-else :class="s.grid()" :style="gridStyle">
         <StoreProductCard
           v-for="(product, i) in visibleProducts"
           :key="product.id"
           :product="product"
           :animIdx="i"
+          :compact="isCompactGrid"
           @click="handleProductOpen(product)"
         />
       </div>
