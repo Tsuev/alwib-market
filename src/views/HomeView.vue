@@ -562,14 +562,14 @@ async function handleSignOut() {
           <div :class="s.formGroup()">
             <label :class="[s.label(), 'flex justify-center']">Логотип магазина</label>
             <div :class="s.storeLogo()" data-tour="store-logo">
-            <UploadZone
-              :modelValue="store.storeData.photo"
-              :uploading="logoUploading"
-              title="Загрузите логотип 1:1 или"
-              hint="JPG, PNG, WebP, HEIC · квадрат лучше всего · исходник до 20 MB"
-              @update:modelValue="handleStorePhotoChange"
-              @change="handleBannerUpload"
-            />
+              <UploadZone
+                :modelValue="store.storeData.photo"
+                :uploading="logoUploading"
+                title="Загрузите логотип 1:1 или"
+                hint="JPG, PNG, WebP, HEIC · квадрат лучше всего · исходник до 20 MB"
+                @update:modelValue="handleStorePhotoChange"
+                @change="handleBannerUpload"
+              />
             </div>
           </div>
 

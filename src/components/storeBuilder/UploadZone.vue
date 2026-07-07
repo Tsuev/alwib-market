@@ -30,7 +30,7 @@ const styles = tv({
   slots: {
     root: 'border-2 border-dashed border-[var(--border-color)] rounded-[var(--radius)] overflow-hidden cursor-pointer transition-[border-color,background] duration-200 w-full bg-[var(--surface)]',
     rootSquare: 'aspect-square max-w-[320px]',
-    rootBanner: 'aspect-[16/9] max-w-[720px]',
+    rootBanner: 'aspect-[16/9]',
     rootDragging: 'border-[var(--accent)] bg-[rgba(var(--accent-rgb),_0.04)]',
     rootHovering: 'border-[var(--accent)] bg-[rgba(var(--accent-rgb),_0.04)]',
     rootHasPhoto: 'border-solid cursor-default',
