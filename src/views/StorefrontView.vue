@@ -284,7 +284,7 @@ const styles = tv({
     notFoundTitle: 'text-2xl font-bold text-[var(--text)]',
     notFoundSub: 'text-[var(--text-sub)] text-sm',
     scrollTopBtn:
-      'fixed bottom-7 right-6 w-11 h-11 bg-[var(--text)] text-[var(--bg)] rounded-full flex items-center justify-center opacity-0 pointer-events-none transition-[opacity,transform] duration-200 shadow-[0_4px_14px_rgba(0,0,0,0.25)] hover:-translate-y-0.5',
+      'fixed bottom-[60px] right-[40px] w-11 h-11 bg-[var(--text)] text-[var(--bg)] rounded-full flex items-center justify-center opacity-0 transition-[opacity] duration-200 shadow-[0_4px_14px_rgba(0,0,0,0.25)]',
     scrollTopBtnVisible: 'opacity-100 pointer-events-auto',
   },
 })
