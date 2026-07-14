@@ -3,7 +3,7 @@ import { useSupabase } from '@/composables/useSupabase'
 const { supabase } = useSupabase()
 
 type AnalyticsTarget =
-  | { entity: 'store'; id: number }
+  | { entity: 'store'; id: string }
   | { entity: 'product'; id: string }
 
 async function incrementViews(target: AnalyticsTarget): Promise<void> {
@@ -16,7 +16,7 @@ async function incrementViews(target: AnalyticsTarget): Promise<void> {
   }
 }
 
-export async function trackStoreView(storeId: number): Promise<void> {
+export async function trackStoreView(storeId: string): Promise<void> {
   try {
     await incrementViews({ entity: 'store', id: storeId })
   } catch (error) {

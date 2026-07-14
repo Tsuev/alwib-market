@@ -48,6 +48,10 @@ export async function createProCheckout(): Promise<CreateCheckoutResult> {
     throw new Error(error.message || 'Не удалось создать платеж')
   }
 
+  if (data?.error === 'already_pro') {
+    throw new Error('Подписка Pro уже активна')
+  }
+
   if (
     !data ||
     typeof data.confirmationUrl !== 'string' ||

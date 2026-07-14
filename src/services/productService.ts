@@ -5,7 +5,7 @@ const { supabase } = useSupabase()
 
 interface DbProduct {
   id: string
-  store_id: number
+  store_id: string
   name: string
   description: string | null
   tags: string[]
@@ -41,7 +41,7 @@ function fromDb(row: DbProduct): Product {
 
 function toDb(
   p: Omit<Product, 'id' | 'views'>,
-  storeId: number,
+  storeId: string,
 ): DbProductWrite {
   const discount =
     p.salePrice && p.salePrice > 0 && p.salePrice < p.price
@@ -59,12 +59,18 @@ function toDb(
   }
 }
 
-export async function loadProducts(storeId: number): Promise<Product[]> {
-  const { data, error } = await supabase
+export async function loadProducts(storeId: string, options?: { limit?: number }): Promise<Product[]> {
+  let query = supabase
     .from('products')
     .select('*')
     .eq('store_id', storeId)
     .order('created_at', { ascending: false })
+
+  if (options?.limit) {
+    query = query.limit(options.limit)
+  }
+
+  const { data, error } = await query
 
   if (error) throw new Error(error.message)
   return (data as DbProduct[]).map(fromDb)
@@ -72,7 +78,7 @@ export async function loadProducts(storeId: number): Promise<Product[]> {
 
 export async function saveProduct(
   product: Omit<Product, 'id' | 'views'> & { id?: string },
-  storeId: number,
+  storeId: string,
 ): Promise<Product> {
   const row = toDb(product, storeId)
 

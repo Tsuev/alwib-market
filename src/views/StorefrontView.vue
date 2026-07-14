@@ -6,6 +6,7 @@ import { tv } from 'tailwind-variants'
 import { useStoreBuilderStore } from '@/stores/storeBuilder'
 import { loadStoreBySlug } from '@/services/storeService'
 import { loadProducts } from '@/services/productService'
+import { getEffectiveThemeId, hasActiveSubscription, resolveVisibleProductLimit } from '@/services/subscriptionEntitlements'
 import { trackProductView, trackStoreView } from '@/services/analyticsService'
 import { applyTheme } from '@/composables/useTheme'
 import StorePreloader from '@/components/storeBuilder/StorePreloader.vue'
@@ -84,10 +85,19 @@ const displayWhatsapp = computed(() =>
   props.slug ? publicStoreData.value?.whatsapp ?? null : store.storeData.whatsapp,
 )
 const displayTelegram = computed(() =>
-  props.slug ? publicStoreData.value?.telegram ?? null : store.storeData.telegram,
+  !subscriptionIsActive.value
+    ? null
+    : props.slug
+      ? publicStoreData.value?.telegram ?? null
+      : store.storeData.telegram,
 )
 const displayProducts = computed(() =>
-  props.slug ? publicProducts.value : store.products,
+  props.slug
+    ? publicProducts.value
+    : store.products.slice(0, resolveVisibleProductLimit(subscriptionIsActive.value)),
+)
+const subscriptionIsActive = computed(() =>
+  props.slug ? !!publicStoreData.value && hasActiveSubscription(publicStoreData.value) : store.isPro,
 )
 
 const loading = ref(true)
@@ -122,15 +132,19 @@ onMounted(async () => {
         return
       }
       const { id, theme, ...rest } = storeRow
-      publicStoreData.value = { ...rest, theme }
-      applyTheme(theme)
+      const activeSubscription = hasActiveSubscription(rest)
+      const effectiveTheme = getEffectiveThemeId(theme, activeSubscription)
+      publicStoreData.value = { ...rest, theme: effectiveTheme }
+      applyTheme(effectiveTheme)
       applyPageMeta(rest.name, rest.photo)
       void trackStoreView(id)
 
       // Загружаем товары отдельно — прелоадер показывает магазин с именем/лого,
       // а товары доезжают чуть позже
       loading.value = false
-      publicProducts.value = await loadProducts(id)
+      publicProducts.value = await loadProducts(id, {
+        limit: resolveVisibleProductLimit(activeSubscription),
+      })
     } catch {
       notFound.value = true
       loading.value = false

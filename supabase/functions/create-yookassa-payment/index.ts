@@ -17,6 +17,10 @@ interface YooKassaCreatePaymentResponse {
   status: string
   paid: boolean
   test: boolean
+  payment_method?: {
+    id?: string
+    saved?: boolean
+  }
   confirmation?: {
     type?: string
     confirmation_url?: string
@@ -135,7 +139,7 @@ Deno.serve(async (req) => {
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey)
     const { data: store, error: storeError } = await supabaseAdmin
       .from('stores')
-      .select('id, plan')
+      .select('id, plan, subscription_status, subscription_expires_at')
       .eq('user_id', user.id)
       .maybeSingle()
 
@@ -147,7 +151,14 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: 'store_not_found' }, 404)
     }
 
-    if (store.plan === 'pro') {
+    const hasActiveSubscription =
+      store.plan === 'pro' &&
+      store.subscription_status !== 'inactive' &&
+      store.subscription_status !== 'past_due' &&
+      (!store.subscription_expires_at ||
+        new Date(store.subscription_expires_at).getTime() > Date.now())
+
+    if (hasActiveSubscription) {
       return jsonResponse({ error: 'already_pro' }, 409)
     }
 
@@ -174,6 +185,7 @@ Deno.serve(async (req) => {
         store_id: String(store.id),
         plan,
         interval,
+        payment_type: 'initial',
       },
     }
 

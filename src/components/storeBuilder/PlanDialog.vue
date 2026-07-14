@@ -50,12 +50,12 @@ const s = tv({
 })()
 
 const FREE_FEATURES = [
-  { text: 'До 5 товаров', ok: true },
+  { text: 'До 10 товаров', ok: true },
   { text: '3 темы оформления', ok: true },
   { text: 'WhatsApp для связи', ok: true },
   { text: 'Telegram для связи', ok: false },
   { text: 'Все темы оформления', ok: false },
-  { text: 'До 100 товаров', ok: false },
+  { text: 'Товары с 11-го скрыты', ok: false },
 ]
 
 const PRO_FEATURES = [
@@ -168,7 +168,7 @@ async function handleCheckout() {
           </ul>
 
           <div :class="s.note()">
-            Безопасная оплата через ЮKassa. После первой оплаты карта может быть сохранена для продления подписки.
+            Безопасная оплата через ЮKassa. После первой оплаты карта может быть сохранена для автопродления. Если продление не пройдет, магазин вернется на Free.
           </div>
 
           <button

@@ -2,7 +2,8 @@ import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import type { Product, StoreData } from '@/types/types'
 import { applyTheme } from '@/composables/useTheme'
-import { loadStore, saveStore as dbSaveStore, updateTheme as dbUpdateTheme } from '@/services/storeService'
+import { FREE_PRODUCT_LIMIT, getEffectiveThemeId, hasActiveSubscription, isThemeAllowedForPlan, resolveVisibleProductLimit } from '@/services/subscriptionEntitlements'
+import { applyFreePlanFallbacks, loadStore, saveStore as dbSaveStore, updateTheme as dbUpdateTheme } from '@/services/storeService'
 import { loadProducts, saveProduct as dbSaveProduct, removeProduct } from '@/services/productService'
 
 const DEFAULT_STORE: StoreData = {
@@ -14,6 +15,8 @@ const DEFAULT_STORE: StoreData = {
   whatsapp: null,
   telegram: null,
   plan: 'free',
+  subscriptionStatus: 'inactive',
+  subscriptionExpiresAt: null,
   views: 0,
 }
 
@@ -65,10 +68,18 @@ export const useStoreBuilderStore = defineStore('storeBuilder', () => {
         store = await dbSaveStore({ ...DEFAULT_STORE }, uid, theme.value)
       }
 
-      const { theme: storeTheme, ...rest } = store
+      let normalizedStore = store
+      const subscriptionActive = hasActiveSubscription(store)
+      const themeAllowed = isThemeAllowedForPlan(store.theme, subscriptionActive)
+
+      if (!subscriptionActive && (store.plan !== 'free' || !themeAllowed)) {
+        normalizedStore = await applyFreePlanFallbacks(store.id)
+      }
+
+      const { theme: storeTheme, ...rest } = normalizedStore
       storeData.value = rest
-      theme.value = storeTheme
-      applyTheme(storeTheme)
+      theme.value = getEffectiveThemeId(storeTheme, hasActiveSubscription(rest))
+      applyTheme(theme.value)
       products.value = await loadProducts(store.id)
       syncPublishedSnapshot()
     } finally {
@@ -102,6 +113,12 @@ export const useStoreBuilderStore = defineStore('storeBuilder', () => {
   async function saveProduct(p: Omit<Product, 'id' | 'views'> & { id?: string }): Promise<void> {
     if (!userId.value) throw new Error('Не авторизован')
 
+    const isEditing = Boolean(p.id)
+
+    if (!isEditing && !hasActiveProSubscription.value && products.value.length >= FREE_PRODUCT_LIMIT) {
+      throw new Error('На тарифе Free доступно до 10 товаров. Подключите Pro, чтобы добавить больше.')
+    }
+
     // Auto-create store on first product save if not published yet
     if (!storeData.value.id) {
       await publishStore()
@@ -125,7 +142,10 @@ export const useStoreBuilderStore = defineStore('storeBuilder', () => {
     syncPublishedSnapshot()
   }
 
-  const isPro = computed(() => storeData.value.plan === 'pro')
+  const hasActiveProSubscription = computed(() => hasActiveSubscription(storeData.value))
+  const isPro = computed(() => hasActiveProSubscription.value)
+  const productLimit = computed(() => resolveVisibleProductLimit(hasActiveProSubscription.value))
+  const lockedProductsCount = computed(() => Math.max(0, products.value.length - productLimit.value))
   const hasUnpublishedChanges = computed(() => buildSnapshot() !== lastPublishedSnapshot.value)
 
   return {
@@ -135,6 +155,8 @@ export const useStoreBuilderStore = defineStore('storeBuilder', () => {
     loading,
     saving,
     isPro,
+    productLimit,
+    lockedProductsCount,
     hasUnpublishedChanges,
     loadData,
     publishStore,

@@ -6,7 +6,7 @@ const corsHeaders = {
 }
 
 type RequestBody =
-  | { entity: 'store'; id: number }
+  | { entity: 'store'; id: string }
   | { entity: 'product'; id: string }
 
 function isValidBody(body: unknown): body is RequestBody {
@@ -16,7 +16,7 @@ function isValidBody(body: unknown): body is RequestBody {
   const id = Reflect.get(body, 'id')
 
   if (entity === 'store') {
-    return typeof id === 'number' && Number.isInteger(id) && id > 0
+    return typeof id === 'string' && id.trim().length > 0
   }
 
   if (entity === 'product') {

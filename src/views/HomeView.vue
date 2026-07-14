@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, onBeforeUnmount, onMounted } from 'vue'
+import { computed, ref, watch, onBeforeUnmount, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { tv } from 'tailwind-variants'
 import { useTippy } from 'vue-tippy'
@@ -19,6 +19,7 @@ import PlanDialog from '@/components/storeBuilder/PlanDialog.vue'
 import SubscriptionSuccessDialog from '@/components/storeBuilder/SubscriptionSuccessDialog.vue'
 import { FREE_THEME_IDS } from '@/constants/constants'
 import { clearPendingCheckout, getPendingCheckout } from '@/services/subscriptionService'
+import { FREE_PRODUCT_LIMIT } from '@/services/subscriptionEntitlements'
 import type { Product } from '@/types/types'
 import { useStoreBuilderTour } from '@/composables/useStoreBuilderTour'
 
@@ -46,6 +47,14 @@ let domainTimer: ReturnType<typeof setTimeout> | null = null
 let domainRequestId = 0
 let publishHintTimer: ReturnType<typeof setTimeout> | null = null
 const viewsFormatter = new Intl.NumberFormat('ru-RU')
+const lockedProductIds = computed(
+  () =>
+    new Set(
+      !store.isPro
+        ? store.products.slice(store.productLimit).map((product) => product.id)
+        : [],
+    ),
+)
 
 const styles = tv({
   slots: {
@@ -444,10 +453,20 @@ function copyLink() {
 }
 
 function openAdd() {
+  if (!store.isPro && store.products.length >= FREE_PRODUCT_LIMIT) {
+    showPlanDialog.value = true
+    return
+  }
+
   editProduct.value = null
   showModal.value = true
 }
 function openEdit(p: Product) {
+  if (!store.isPro && lockedProductIds.value.has(p.id)) {
+    showPlanDialog.value = true
+    return
+  }
+
   editProduct.value = p
   showModal.value = true
 }
@@ -776,10 +795,16 @@ async function handleSignOut() {
               :key="product.id"
               :product="product"
               :animIdx="i"
+              :locked="!store.isPro && i >= store.productLimit"
               @edit="openEdit"
               @delete="store.deleteProduct"
+              @locked-click="showPlanDialog = true"
             />
           </div>
+          <p v-if="!store.isPro && store.lockedProductsCount > 0" :class="s.lockedHint()">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            Товары с 11-го и далее скрыты на витрине, пока подписка Pro не активна.
+          </p>
         </section>
       </div>
     </div>

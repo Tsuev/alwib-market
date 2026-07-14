@@ -14,9 +14,10 @@ export interface Product {
 }
 
 export type Plan = 'free' | 'pro'
+export type SubscriptionStatus = 'inactive' | 'active' | 'past_due'
 
 export interface StoreData {
-  id?: number // bigint from Supabase, undefined for unsaved stores
+  id?: string // uuid from Supabase, undefined for unsaved stores
   name: string
   domain: string // maps to slug in DB
   description: string
@@ -25,6 +26,8 @@ export interface StoreData {
   whatsapp: string | null
   telegram: string | null
   plan: Plan
+  subscriptionStatus: SubscriptionStatus
+  subscriptionExpiresAt: string | null
   views: number
 }
 

@@ -5,8 +5,10 @@ import Button from 'primevue/button'
 import type { Product } from '@/types/types'
 import { formatRub, calcDiscount, placeholderSvg } from '@/composables/useImageToBase64'
 
-const props = defineProps<{ product: Product; animIdx: number }>()
-const emit = defineEmits<{ edit: [product: Product]; delete: [id: string] }>()
+const props = withDefaults(defineProps<{ product: Product; animIdx: number; locked?: boolean }>(), {
+  locked: false,
+})
+const emit = defineEmits<{ edit: [product: Product]; delete: [id: string]; lockedClick: [] }>()
 
 const leaving = ref(false)
 const viewsFormatter = new Intl.NumberFormat('ru-RU')
@@ -15,9 +17,12 @@ const styles = tv({
   slots: {
     root: 'flex items-center gap-3.5 p-3 border border-[var(--border-color)] rounded-[var(--radius)] bg-[var(--surface)] transition-[box-shadow,background,border-color,opacity,transform] duration-200 stagger-in hover:shadow-[0_2px_10px_rgba(0,0,0,0.08)]',
     rootLeaving: 'opacity-0 scale-[0.96]',
+    rootLocked: 'relative overflow-hidden bg-[var(--surface-alt)]',
     thumb: 'w-14 h-14 rounded-[calc(var(--radius)-2px)] overflow-hidden shrink-0',
     thumbImg: 'w-full h-full object-cover',
+    thumbLocked: 'opacity-45 blur-[1px]',
     body: 'flex-1 min-w-0',
+    bodyLocked: 'opacity-55',
     head: 'flex items-start gap-2',
     name: 'text-sm font-semibold text-[var(--text)] truncate',
     views: 'inline-flex items-center gap-1 text-[11px] text-[var(--text-sub)] whitespace-nowrap shrink-0',
@@ -29,10 +34,35 @@ const styles = tv({
     tagsRow: 'flex gap-1 flex-wrap mt-1',
     tag: 'inline-flex px-[7px] py-[2px] bg-[rgba(var(--accent-rgb),_0.1)] text-[var(--accent)] rounded-full text-[11px] font-medium',
     actions: 'flex gap-1 shrink-0',
+    lockOverlay:
+      'absolute inset-0 flex items-center justify-center bg-[rgba(10,10,10,0.36)] backdrop-blur-[2px]',
+    lockButton:
+      'inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/70 px-4 py-2 text-xs font-bold text-white cursor-pointer',
   },
 })
 
-const { root, rootLeaving, thumb, thumbImg, body, head, name, views, priceRow, priceMain, priceStrike, pricePct, tagsRow, tag, actions } = styles()
+const {
+  root,
+  rootLeaving,
+  rootLocked,
+  thumb,
+  thumbImg,
+  thumbLocked,
+  body,
+  bodyLocked,
+  head,
+  name,
+  views,
+  priceRow,
+  priceMain,
+  priceStrike,
+  pricePct,
+  tagsRow,
+  tag,
+  actions,
+  lockOverlay,
+  lockButton,
+} = styles()
 
 function handleDelete() {
   leaving.value = true
@@ -42,18 +72,18 @@ function handleDelete() {
 
 <template>
   <div
-    :class="[root(), leaving && rootLeaving()]"
+    :class="[root(), props.locked && rootLocked(), leaving && rootLeaving()]"
     :style="{ animationDelay: `${Math.min(animIdx, 5) * 60}ms` }"
   >
     <div :class="thumb()">
       <img
         :src="product.photo || placeholderSvg(product.name)"
         :alt="product.name"
-        :class="thumbImg()"
+        :class="[thumbImg(), props.locked && thumbLocked()]"
       />
     </div>
 
-    <div :class="body()">
+    <div :class="[body(), props.locked && bodyLocked()]">
       <div :class="head()">
         <div :class="name()">{{ product.name }}</div>
         <div :class="views()" title="Просмотры карточки">
@@ -77,7 +107,7 @@ function handleDelete() {
       </div>
     </div>
 
-    <div :class="actions()">
+    <div v-if="!props.locked" :class="actions()">
       <Button
         title="Редактировать"
         text
@@ -118,6 +148,16 @@ function handleDelete() {
           </svg>
         </template>
       </Button>
+    </div>
+
+    <div v-if="props.locked" :class="lockOverlay()">
+      <button type="button" :class="lockButton()" @click="emit('lockedClick')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="11" width="18" height="10" rx="2" />
+          <path d="M7 11V8a5 5 0 0 1 10 0v3" />
+        </svg>
+        Открыть в Pro
+      </button>
     </div>
   </div>
 </template>

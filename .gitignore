@@ -4,3 +4,7 @@ playwright-report
 test-results
 .env.e2e
 dist
+migrations
+deno.lock
+supabase/config.toml
+supabase/migrations/
