@@ -8,7 +8,12 @@ import { formatRub, calcDiscount, placeholderSvg } from '@/composables/useImageT
 const props = withDefaults(defineProps<{ product: Product; animIdx: number; locked?: boolean }>(), {
   locked: false,
 })
-const emit = defineEmits<{ edit: [product: Product]; delete: [id: string]; lockedClick: [] }>()
+const emit = defineEmits<{
+  edit: [product: Product]
+  duplicate: [product: Product]
+  delete: [id: string]
+  lockedClick: []
+}>()
 
 const leaving = ref(false)
 const viewsFormatter = new Intl.NumberFormat('ru-RU')
@@ -108,6 +113,25 @@ function handleDelete() {
     </div>
 
     <div v-if="!props.locked" :class="actions()">
+      <Button
+        title="Дублировать"
+        text
+        rounded
+        :pt="{
+          root: {
+            class:
+              'w-[30px] h-[30px] flex items-center justify-center rounded-md text-[var(--text-sub)] hover:bg-[var(--surface-alt)] hover:text-[var(--text)] transition-[background,color] duration-[180ms]',
+          },
+        }"
+        @click="emit('duplicate', product)"
+      >
+        <template #icon>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="9" y="9" width="11" height="11" rx="2" />
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+          </svg>
+        </template>
+      </Button>
       <Button
         title="Редактировать"
         text

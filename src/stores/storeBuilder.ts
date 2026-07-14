@@ -29,6 +29,11 @@ export const useStoreBuilderStore = defineStore('storeBuilder', () => {
   const userId = ref<string | null>(null)
   const lastPublishedSnapshot = ref('')
 
+  function buildDuplicateName(name: string): string {
+    const trimmed = name.trim()
+    return trimmed ? `${trimmed} (копия)` : 'Копия товара'
+  }
+
   function buildSnapshot(): string {
     return JSON.stringify({
       theme: theme.value,
@@ -142,6 +147,17 @@ export const useStoreBuilderStore = defineStore('storeBuilder', () => {
     syncPublishedSnapshot()
   }
 
+  async function duplicateProduct(product: Product): Promise<void> {
+    await saveProduct({
+      name: buildDuplicateName(product.name),
+      description: product.description,
+      price: product.price,
+      salePrice: product.salePrice,
+      tags: [...product.tags],
+      photo: product.photo,
+    })
+  }
+
   const hasActiveProSubscription = computed(() => hasActiveSubscription(storeData.value))
   const isPro = computed(() => hasActiveProSubscription.value)
   const productLimit = computed(() => resolveVisibleProductLimit(hasActiveProSubscription.value))
@@ -162,6 +178,7 @@ export const useStoreBuilderStore = defineStore('storeBuilder', () => {
     publishStore,
     setTheme,
     saveProduct,
+    duplicateProduct,
     deleteProduct,
   }
 })

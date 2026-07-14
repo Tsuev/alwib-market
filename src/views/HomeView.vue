@@ -471,6 +471,29 @@ function openEdit(p: Product) {
   showModal.value = true
 }
 
+async function handleDuplicateProduct(product: Product) {
+  try {
+    await store.duplicateProduct(product)
+    toast.add({
+      severity: 'success',
+      summary: 'Готово',
+      detail: 'Товар продублирован',
+      life: 3000,
+    })
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Не удалось продублировать товар'
+    if (message.includes('до 10 товаров')) {
+      showPlanDialog.value = true
+    }
+    toast.add({
+      severity: 'error',
+      summary: 'Ошибка',
+      detail: message,
+      life: 4000,
+    })
+  }
+}
+
 async function handleSignOut() {
   await signOut()
   await router.push('/auth')
@@ -797,6 +820,7 @@ async function handleSignOut() {
               :animIdx="i"
               :locked="!store.isPro && i >= store.productLimit"
               @edit="openEdit"
+              @duplicate="handleDuplicateProduct"
               @delete="store.deleteProduct"
               @locked-click="showPlanDialog = true"
             />
