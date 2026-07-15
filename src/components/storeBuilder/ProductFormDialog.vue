@@ -10,6 +10,7 @@ import { placeholderSvg, calcDiscount } from '@/composables/useImageToBase64'
 import { preparePhotoForUpload, uploadPhoto } from '@/composables/useStorageUpload'
 import { getSession } from '@/services/authServices'
 import { useStoreBuilderStore } from '@/stores/storeBuilder'
+import { dedupeTagNames, normalizeTagName } from '@/services/tagService'
 
 const props = defineProps<{ product: Product | null }>()
 const emit = defineEmits<{ close: [] }>()
@@ -47,6 +48,10 @@ const discount = computed(() => {
 })
 
 const displayPhoto = computed(() => photoPreviewUrl.value || form.value.photo)
+const suggestedTags = computed(() => {
+  const selected = new Set(form.value.tags.map(normalizeTagName))
+  return store.storeTags.filter((tag) => !selected.has(normalizeTagName(tag.name)))
+})
 
 const styles = tv({
   slots: {
@@ -70,6 +75,12 @@ const styles = tv({
     formRow2: 'grid grid-cols-1 sm:grid-cols-2 gap-4',
     fieldError: 'text-xs text-[#E85D47] mt-1 fade-in',
     fieldHint: 'text-xs text-[var(--text-sub)] mt-1',
+    suggestedTagsWrap: 'mb-2.5',
+    suggestedTagsHeader: 'flex items-center justify-between gap-2 mb-1.5',
+    suggestedTagsTitle: 'text-[11px] font-semibold uppercase tracking-[.08em] text-[var(--text-sub)]',
+    suggestedTagsCount: 'text-[11px] text-[var(--text-sub)]',
+    suggestedTags: 'flex flex-wrap gap-1.5 max-h-[88px] overflow-y-auto pr-1',
+    suggestedTag: 'inline-flex items-center px-2.5 py-[5px] bg-[var(--surface-alt)] text-[var(--text-sub)] rounded-full text-xs font-medium border border-[var(--border-color)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors duration-[180ms]',
     priceWrap: 'relative',
     discountBadge: 'absolute right-2.5 top-1/2 -translate-y-1/2 bg-[#E85D47] text-white text-[11px] font-bold px-[7px] py-[3px] rounded-full whitespace-nowrap fade-in pointer-events-none',
     saveErrBox: 'mx-4 sm:mx-6 mb-0 mt-3 px-3 py-2.5 bg-[rgba(232,93,71,0.08)] border border-[#E85D47]/30 rounded-[var(--radius)] text-xs text-[#E85D47]',
@@ -106,6 +117,10 @@ function clearPhotoPreview() {
   photoPreviewUrl.value = null
 }
 
+function handleTagAdd(tagName: string) {
+  form.value.tags = dedupeTagNames([...form.value.tags, tagName])
+}
+
 async function handleSave() {
   const e = validate()
   if (Object.keys(e).length) { errors.value = e; return }
@@ -127,7 +142,7 @@ async function handleSave() {
       description: form.value.description,
       price: Number(form.value.price),
       salePrice: form.value.salePrice ? Number(form.value.salePrice) : null,
-      tags: form.value.tags,
+      tags: dedupeTagNames(form.value.tags),
       photo: form.value.photo,
     })
     handleClose()
@@ -304,6 +319,23 @@ async function handlePhotoUpload(e: Event) {
 
           <div :class="s.formGroup()" data-tour="product-tags">
             <label :class="s.label()">Теги</label>
+            <div v-if="suggestedTags.length" :class="s.suggestedTagsWrap()">
+              <div :class="s.suggestedTagsHeader()">
+                <span :class="s.suggestedTagsTitle()">Теги магазина</span>
+                <span :class="s.suggestedTagsCount()">+{{ suggestedTags.length }} доступно</span>
+              </div>
+              <div :class="s.suggestedTags()">
+                <button
+                  v-for="tag in suggestedTags"
+                  :key="tag.id"
+                  type="button"
+                  :class="s.suggestedTag()"
+                  @click="handleTagAdd(tag.name)"
+                >
+                  + {{ tag.name }}
+                </button>
+              </div>
+            </div>
             <InputChips
               v-model="form.tags"
               placeholder="Добавить тег…"
@@ -324,7 +356,9 @@ async function handlePhotoUpload(e: Event) {
                 },
               }"
             />
-            <div :class="s.fieldHint()">Нажмите Enter чтобы добавить тег · максимум 5</div>
+            <div :class="s.fieldHint()">
+              Нажмите Enter чтобы добавить тег · максимум 5. Новые теги сохранятся в общем списке магазина вместе с товаром.
+            </div>
           </div>
         </div>
       </div>

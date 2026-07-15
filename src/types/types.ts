@@ -13,6 +13,13 @@ export interface Product {
   views: number
 }
 
+export interface StoreTag {
+  id: string
+  storeId: string
+  name: string
+  createdAt: string
+}
+
 export type Plan = 'free' | 'pro'
 export type SubscriptionStatus = 'inactive' | 'active' | 'past_due'
 

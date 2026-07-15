@@ -45,6 +45,30 @@ export interface Database {
         }
         Relationships: []
       }
+      store_tags: {
+        Row: {
+          id: string
+          store_id: string
+          name: string
+          normalized_name: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          store_id: string
+          name: string
+          normalized_name: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          store_id?: string
+          name?: string
+          normalized_name?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
       stores: {
         Row: {
           id: string

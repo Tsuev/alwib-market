@@ -20,6 +20,9 @@
   --btn-radius: 6px;
   --store-cols: 3;
   --ease: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --scrollbar-thumb: rgba(var(--accent-rgb), 0.42);
+  --scrollbar-thumb-hover: rgba(var(--accent-rgb), 0.62);
+  --scrollbar-track: rgba(var(--accent-rgb), 0.08);
 }
 
 [data-theme="organic"] {
@@ -159,6 +162,43 @@ body,
   color: var(--text);
   -webkit-font-smoothing: antialiased;
   transition: background 300ms, color 300ms;
+}
+
+html {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+  border-radius: 999px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 .store-builder-tour-popover {

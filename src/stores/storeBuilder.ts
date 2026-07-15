@@ -1,10 +1,21 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
-import type { Product, StoreData } from '@/types/types'
+import type { Product, StoreData, StoreTag } from '@/types/types'
 import { applyTheme } from '@/composables/useTheme'
 import { FREE_PRODUCT_LIMIT, getEffectiveThemeId, hasActiveSubscription, isThemeAllowedForPlan, resolveVisibleProductLimit } from '@/services/subscriptionEntitlements'
 import { applyFreePlanFallbacks, loadStore, saveStore as dbSaveStore, updateTheme as dbUpdateTheme } from '@/services/storeService'
 import { loadProducts, saveProduct as dbSaveProduct, removeProduct } from '@/services/productService'
+import {
+  canonicalizeTagNames,
+  createStoreTag as dbCreateStoreTag,
+  deleteStoreTag as dbDeleteStoreTag,
+  dedupeTagNames,
+  ensureStoreTags,
+  loadStoreTags,
+  removeTagFromProducts,
+  renameTagInProducts,
+  updateStoreTag as dbUpdateStoreTag,
+} from '@/services/tagService'
 
 const DEFAULT_STORE: StoreData = {
   name: '',
@@ -20,10 +31,17 @@ const DEFAULT_STORE: StoreData = {
   views: 0,
 }
 
+function sortTags(tags: StoreTag[]): StoreTag[] {
+  return [...tags].sort((a, b) =>
+    a.name.localeCompare(b.name, 'ru', { sensitivity: 'base' }),
+  )
+}
+
 export const useStoreBuilderStore = defineStore('storeBuilder', () => {
   const theme = ref('minimal')
   const storeData = ref<StoreData>({ ...DEFAULT_STORE })
   const products = ref<Product[]>([])
+  const storeTags = ref<StoreTag[]>([])
   const loading = ref(false)
   const saving = ref(false)
   const userId = ref<string | null>(null)
@@ -86,6 +104,7 @@ export const useStoreBuilderStore = defineStore('storeBuilder', () => {
       theme.value = getEffectiveThemeId(storeTheme, hasActiveSubscription(rest))
       applyTheme(theme.value)
       products.value = await loadProducts(store.id)
+      storeTags.value = sortTags(await loadStoreTags(store.id))
       syncPublishedSnapshot()
     } finally {
       loading.value = false
@@ -129,7 +148,16 @@ export const useStoreBuilderStore = defineStore('storeBuilder', () => {
       await publishStore()
     }
 
-    const saved = await dbSaveProduct(p, storeData.value.id!)
+    const ensuredTags = await ensureStoreTags(p.tags, storeData.value.id!)
+    const canonicalTags = canonicalizeTagNames(p.tags, ensuredTags)
+    const mergedTags = new Map(storeTags.value.map((tag) => [tag.id, tag] as const))
+    for (const tag of ensuredTags) mergedTags.set(tag.id, tag)
+    storeTags.value = sortTags([...mergedTags.values()])
+
+    const saved = await dbSaveProduct(
+      { ...p, tags: canonicalTags },
+      storeData.value.id!,
+    )
 
     if (p.id) {
       const idx = products.value.findIndex((x) => x.id === p.id)
@@ -158,6 +186,62 @@ export const useStoreBuilderStore = defineStore('storeBuilder', () => {
     })
   }
 
+  async function createTag(name: string): Promise<StoreTag> {
+    if (!storeData.value.id) {
+      await publishStore()
+    }
+
+    const tag = await dbCreateStoreTag(name, storeData.value.id!)
+    const exists = storeTags.value.some((item) => item.id === tag.id)
+
+    if (!exists) {
+      storeTags.value = sortTags([...storeTags.value, tag])
+    }
+
+    return tag
+  }
+
+  async function updateTag(tagId: string, name: string): Promise<void> {
+    if (!storeData.value.id) throw new Error('Магазин не найден')
+
+    const current = storeTags.value.find((tag) => tag.id === tagId)
+    if (!current) throw new Error('Тег не найден')
+
+    const updatedTag = await dbUpdateStoreTag(tagId, name)
+
+    if (current.name !== updatedTag.name) {
+      await renameTagInProducts(storeData.value.id, current.name, updatedTag.name)
+      products.value = products.value.map((product) => ({
+        ...product,
+        tags: dedupeTagNames(
+          product.tags.map((tag) => (tag === current.name ? updatedTag.name : tag)),
+        ),
+      }))
+    }
+
+    storeTags.value = storeTags.value
+      .map((tag) => (tag.id === tagId ? updatedTag : tag))
+    storeTags.value = sortTags(storeTags.value)
+    syncPublishedSnapshot()
+  }
+
+  async function deleteTag(tagId: string): Promise<void> {
+    if (!storeData.value.id) throw new Error('Магазин не найден')
+
+    const current = storeTags.value.find((tag) => tag.id === tagId)
+    if (!current) return
+
+    await dbDeleteStoreTag(tagId)
+    await removeTagFromProducts(storeData.value.id, current.name)
+
+    storeTags.value = storeTags.value.filter((tag) => tag.id !== tagId)
+    products.value = products.value.map((product) => ({
+      ...product,
+      tags: product.tags.filter((tag) => tag !== current.name),
+    }))
+    syncPublishedSnapshot()
+  }
+
   const hasActiveProSubscription = computed(() => hasActiveSubscription(storeData.value))
   const isPro = computed(() => hasActiveProSubscription.value)
   const productLimit = computed(() => resolveVisibleProductLimit(hasActiveProSubscription.value))
@@ -168,6 +252,7 @@ export const useStoreBuilderStore = defineStore('storeBuilder', () => {
     theme,
     storeData,
     products,
+    storeTags,
     loading,
     saving,
     isPro,
@@ -180,5 +265,8 @@ export const useStoreBuilderStore = defineStore('storeBuilder', () => {
     saveProduct,
     duplicateProduct,
     deleteProduct,
+    createTag,
+    updateTag,
+    deleteTag,
   }
 })

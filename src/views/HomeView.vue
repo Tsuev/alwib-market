@@ -16,6 +16,7 @@ import UploadZone from '@/components/storeBuilder/UploadZone.vue'
 import AdminProductCard from '@/components/storeBuilder/AdminProductCard.vue'
 import ProductFormDialog from '@/components/storeBuilder/ProductFormDialog.vue'
 import PlanDialog from '@/components/storeBuilder/PlanDialog.vue'
+import StoreTagsDialog from '@/components/storeBuilder/StoreTagsDialog.vue'
 import SubscriptionSuccessDialog from '@/components/storeBuilder/SubscriptionSuccessDialog.vue'
 import { FREE_THEME_IDS } from '@/constants/constants'
 import { clearPendingCheckout, getPendingCheckout } from '@/services/subscriptionService'
@@ -34,6 +35,7 @@ const contactError = ref('')
 const whatsappError = ref('')
 const showModal = ref(false)
 const showPlanDialog = ref(false)
+const showTagsDialog = ref(false)
 const editProduct = ref<Product | null>(null)
 const domainStatus = ref<'idle' | 'checking' | 'available' | 'taken'>('idle')
 const domainFocused = ref(false)
@@ -120,6 +122,8 @@ const styles = tv({
       'w-3.5 h-3.5 border-2 border-[rgba(var(--accent-rgb),_0.2)] border-t-[var(--accent)] rounded-full animate-spin inline-block',
     addBtn:
       'inline-flex items-center justify-center gap-[7px] px-4 py-2 border-[1.5px] border-[var(--accent)] text-[var(--accent)] rounded-[var(--btn-radius)] text-[13px] font-semibold transition-[background] duration-[180ms] hover:bg-[rgba(var(--accent-rgb),_0.07)] w-full sm:w-auto',
+    secondaryActionBtn:
+      'inline-flex items-center justify-center gap-[7px] px-4 py-2 border border-[var(--border-color)] text-[var(--text-sub)] rounded-[var(--btn-radius)] text-[13px] font-semibold transition-[background,color,border-color] duration-[180ms] hover:bg-[var(--surface-alt)] hover:text-[var(--text)] w-full sm:w-auto',
     emptyProducts:
       'flex flex-col items-center justify-center gap-2.5 py-12 px-5 text-[var(--text-sub)] text-center border border-dashed border-[var(--border-color)] rounded-[var(--radius)] fade-in',
     emptyText: 'text-[15px] font-medium',
@@ -780,20 +784,36 @@ async function handleSignOut() {
               Товары
               <span :class="s.countBadge()">{{ store.products.length }}</span>
             </h2>
-            <button :class="s.addBtn()" data-tour="add-product" @click="openAdd">
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.5"
-              >
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
-              Добавить товар
-            </button>
+            <div class="flex flex-col sm:flex-row gap-2">
+              <button :class="s.secondaryActionBtn()" @click="showTagsDialog = true">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="M20.59 13.41 11 3.83A2 2 0 0 0 9.59 3H4a1 1 0 0 0-1 1v5.59A2 2 0 0 0 3.83 11l9.58 9.59a2 2 0 0 0 2.83 0l4.35-4.35a2 2 0 0 0 0-2.83Z" />
+                  <circle cx="7.5" cy="7.5" r="1.5" />
+                </svg>
+                Теги/Категории
+              </button>
+              <button :class="s.addBtn()" data-tour="add-product" @click="openAdd">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                >
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                Добавить товар
+              </button>
+            </div>
           </div>
 
           <div v-if="store.products.length === 0" :class="s.emptyProducts()">
@@ -867,6 +887,11 @@ async function handleSignOut() {
     v-if="showModal"
     :product="editProduct"
     @close="closeProductDialog"
+  />
+
+  <StoreTagsDialog
+    v-if="showTagsDialog"
+    @close="showTagsDialog = false"
   />
 
   <!-- Plan modal -->
