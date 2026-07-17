@@ -71,13 +71,13 @@ const styles = tv({
     closeBtn:
       'shrink-0 inline-flex items-center justify-center w-11 h-11 rounded-full border border-[var(--border-color)] bg-[var(--surface)] text-[var(--text-sub)] transition-[border-color,color,transform] duration-[180ms] hover:border-[var(--accent)] hover:text-[var(--accent)] active:scale-[0.97] cursor-pointer',
     summary:
-      'mt-4 grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto] gap-3 rounded-[24px] border border-[var(--border-color)] bg-[var(--surface-alt)]/70 p-4 sm:p-5',
+      'mt-4 grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto] gap-3 rounded-[24px] border border-[var(--border-color)] bg-[var(--surface-alt)]/70 p-4 sm:p-5 items-center',
     summaryMeta: 'flex flex-col gap-1',
     summaryLabel: 'text-[12px] uppercase tracking-[0.14em] font-bold text-[var(--text-sub)]',
     summaryValue: 'text-[22px] sm:text-[26px] font-black text-[var(--text)]',
     summaryHint: 'text-[13px] text-[var(--text-sub)]',
     clearBtn:
-      'inline-flex items-center justify-center px-4 py-3 rounded-full border border-[var(--border-color)] text-[13px] font-bold text-[var(--text-sub)] transition-[border-color,color,background] duration-[180ms] hover:border-[var(--accent)] hover:text-[var(--accent)] hover:bg-[rgba(var(--accent-rgb),_0.08)] cursor-pointer',
+      'inline-flex items-center justify-center px-4 py-3 rounded-full border border-[var(--border-color)] text-[13px] font-bold text-[var(--text-sub)] transition-[border-color,color,background] duration-[180ms] hover:border-[var(--accent)] hover:text-[var(--accent)] hover:bg-[rgba(var(--accent-rgb),_0.08)] cursor-pointer h-10',
     body: 'flex-1 overflow-y-auto px-4 sm:px-6 py-4 sm:py-5',
     list: 'flex flex-col gap-3.5',
     item:
