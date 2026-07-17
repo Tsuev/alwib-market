@@ -4,9 +4,19 @@ import { tv } from 'tailwind-variants'
 import Dialog from 'primevue/dialog'
 import type { Product } from '@/types/types'
 import { formatRub, calcDiscount, placeholderSvg } from '@/composables/useImageToBase64'
+import CartQuantityControl from '@/components/storeBuilder/CartQuantityControl.vue'
 
-const props = defineProps<{ product: Product; whatsapp?: string | null; telegram?: string | null }>()
-const emit = defineEmits<{ close: [] }>()
+const props = defineProps<{
+  product: Product
+  whatsapp?: string | null
+  telegram?: string | null
+  quantity?: number
+}>()
+const emit = defineEmits<{
+  close: []
+  increment: [productId: string]
+  decrement: [productId: string]
+}>()
 
 const visible = ref(false)
 
@@ -54,6 +64,11 @@ const styles = tv({
     priceSale: 'font-bold text-[var(--accent)] text-[22px]',
     priceOrig: 'text-sm text-[var(--text-sub)] line-through',
     priceOnly: 'font-bold text-[22px] text-[var(--text)]',
+    cartWrap:
+      'mt-1 rounded-[22px] border border-[var(--border-color)] bg-[var(--surface-alt)]/75 px-3.5 py-3.5 flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between',
+    cartTextWrap: 'flex flex-col gap-1',
+    cartLabel: 'text-[11px] font-bold text-[var(--text-sub)] uppercase tracking-[.1em]',
+    cartTitle: 'text-[15px] font-bold text-[var(--text)]',
     contactWrap: 'flex flex-col gap-2 mt-auto',
     contactLabel: 'text-[11px] font-bold text-[var(--text-sub)] uppercase tracking-[.07em]',
     contactRow: 'flex flex-col sm:flex-row gap-2.5',
@@ -118,9 +133,24 @@ function handleClose() {
           </template>
           <span v-else :class="s.priceOnly()">{{ formatRub(product.price) }}</span>
         </div>
+
+        <div :class="s.cartWrap()">
+          <div :class="s.cartTextWrap()">
+            <span :class="s.cartLabel()">Корзина</span>
+            <strong :class="s.cartTitle()">
+              {{ props.quantity ? `В корзине ${props.quantity} шт` : 'Добавьте товар в корзину' }}
+            </strong>
+          </div>
+          <CartQuantityControl
+            :quantity="props.quantity ?? 0"
+            size="md"
+            @increment="emit('increment', product.id)"
+            @decrement="emit('decrement', product.id)"
+          />
+        </div>
         
         <div :class="s.contactWrap()">
-          <span :class="s.contactLabel()">Связаться</span>
+          <span :class="s.contactLabel()">Связаться сразу</span>
         <div :class="s.contactRow()">
           <a
             v-if="props.whatsapp"

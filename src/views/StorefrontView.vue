@@ -9,9 +9,12 @@ import { loadProducts } from '@/services/productService'
 import { getEffectiveThemeId, hasActiveSubscription, resolveVisibleProductLimit } from '@/services/subscriptionEntitlements'
 import { trackProductView, trackStoreView } from '@/services/analyticsService'
 import { applyTheme } from '@/composables/useTheme'
+import { formatRub } from '@/composables/useImageToBase64'
+import { useStorefrontCart } from '@/composables/useStorefrontCart'
 import StorePreloader from '@/components/storeBuilder/StorePreloader.vue'
 import StoreProductCard from '@/components/storeBuilder/StoreProductCard.vue'
 import ProductDetailDialog from '@/components/storeBuilder/ProductDetailDialog.vue'
+import CartSheetDialog from '@/components/storeBuilder/CartSheetDialog.vue'
 import type { Product, StoreData } from '@/types/types'
 
 const props = defineProps<{ slug?: string }>()
@@ -107,6 +110,7 @@ const debouncedSearch = refDebounced(search, 300)
 const activeTag = ref<string | null>(null)
 const mobileGridMode = ref<'single' | 'double'>('single')
 const selectedProduct = ref<Product | null>(null)
+const cartOpen = ref(false)
 const scrollRef = ref<HTMLElement | null>(null)
 const sticky = ref(false)
 const showTop = ref(false)
@@ -199,6 +203,25 @@ const visibleProducts = computed(() => filtered.value.slice(0, visibleCount.valu
 const hasMore = computed(() => visibleCount.value < filtered.value.length)
 const sentinelRef = ref<HTMLElement | null>(null)
 
+const cartScope = computed(() => {
+  if (props.slug) {
+    return `public:${props.slug}`
+  }
+
+  return `preview:${(store.storeData.id ?? store.storeData.domain) || 'draft'}`
+})
+
+const cart = useStorefrontCart({
+  products: displayProducts,
+  scope: cartScope,
+})
+const cartItems = computed(() => cart.items.value)
+const cartTotalCount = computed(() => cart.totalCount.value)
+const cartTotalAmountLabel = computed(() => formatRub(cart.totalAmount.value))
+const selectedProductQuantity = computed(() =>
+  selectedProduct.value ? cart.getQuantity(selectedProduct.value.id) : 0,
+)
+
 watch(filtered, () => { visibleCount.value = PAGE_SIZE })
 
 function handleProductOpen(product: Product) {
@@ -206,6 +229,14 @@ function handleProductOpen(product: Product) {
   if (props.slug) {
     void trackProductView(product.id)
   }
+}
+
+function openCart() {
+  cartOpen.value = true
+}
+
+function closeCart() {
+  cartOpen.value = false
 }
 
 function onScroll() {
@@ -264,6 +295,12 @@ const styles = tv({
     stickyBarScrolled:
       'bg-[var(--bg)]/88 backdrop-blur-[12px] border-b-[var(--border-color)]',
     stickyInner: 'max-w-[1100px] mx-auto px-6 py-3.5 flex flex-col gap-2.5',
+    topNote:
+      'w-full border-b border-[var(--border-color)] bg-[var(--surface)]/92',
+    topNoteInner:
+      'max-w-[1100px] mx-auto px-6 text-[12px] sm:text-[13px] text-[var(--text-sub)] text-center',
+    topNoteLink:
+      'text-[var(--accent)] font-semibold hover:opacity-80 transition-opacity duration-[180ms]',
     controlsRow: 'flex flex-col gap-2 sm:gap-2.5',
     searchWrap: 'relative',
     searchIcon:
@@ -276,20 +313,25 @@ const styles = tv({
     mobileViewSwitcher: 'flex items-center justify-between gap-3 min-[541px]:hidden',
     mobileViewLabel: 'text-[12px] font-semibold text-[var(--text-sub)]',
     mobileViewBtn:
-      'inline-flex items-center justify-center w-10 h-10 rounded-full border border-[var(--border-color)] bg-[var(--surface)] text-[var(--text)] transition-[border-color,background,color,transform] duration-[180ms] cursor-pointer hover:border-[var(--accent)] hover:text-[var(--accent)] active:scale-[0.97]',
+      'inline-flex items-center justify-center w-8 h-8 rounded-full border border-[var(--border-color)] bg-[var(--surface)] text-[var(--text)] transition-[border-color,background,color,transform] duration-[180ms] cursor-pointer hover:border-[var(--accent)] hover:text-[var(--accent)] active:scale-[0.97]',
     tagChip:
       'px-3.5 py-[5px] rounded-full text-xs font-semibold border-[1.5px] border-[var(--border-color)] text-[var(--text-sub)]  whitespace-nowrap transition-all duration-[180ms] hover:border-[var(--accent)] hover:text-[var(--accent)] hover:bg-[rgba(var(--accent-rgb),_0.06)] cursor-pointer',
     tagChipActive:
       'text-white hover:text-white hover:bg-[var(--accent)] bg-[var(--accent)] border-[var(--accent)]',
-    main: 'max-w-[1100px] mx-auto px-6 py-7 pb-[96px]',
+    main: 'max-w-[1100px] mx-auto px-6 py-7',
+    mainWithCart: 'pb-[152px] sm:pb-[164px]',
     grid: 'grid grid-store-cols gap-5',
     footer:
-      'fixed w-full bottom-0 z-40 border-t border-[var(--border-color)] bg-[var(--surface)]/95 backdrop-blur-[10px] transition-[background,border-color] duration-300',
+      'fixed inset-x-0 bottom-0 z-40 px-3 sm:px-6 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3',
     footerCard:
-      'max-w-[1100px] mx-auto px-6 py-3 flex items-center justify-center text-center',
-    footerMadeWith: 'text-[13px] text-[var(--text-sub)]',
-    footerMadeWithLink:
-      'text-[var(--accent)] font-semibold hover:opacity-80 transition-opacity duration-[180ms]',
+      'max-w-[1100px] mx-auto rounded-[28px] border border-[var(--border-color)] bg-[var(--surface)]/95 px-4 sm:px-5 py-3.5 shadow-[0_18px_40px_rgba(0,0,0,0.14)] backdrop-blur-[14px]',
+    footerInner: 'flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between',
+    footerMeta: 'min-w-0 flex flex-col gap-1',
+    footerTitle: 'text-[16px] font-black text-[var(--text)] tracking-[-0.02em]',
+    footerSub: 'text-[13px] text-[var(--text-sub)]',
+    footerActions: 'flex items-center gap-2 sm:gap-3 justify-end',
+    footerBtn:
+      'inline-flex items-center justify-center gap-2 rounded-full bg-[var(--accent)] px-4 sm:px-5 py-3 text-[14px] font-bold text-white transition-[transform,filter] duration-[180ms] hover:brightness-[1.04] active:scale-[0.99] cursor-pointer',
     empty:
       'flex flex-col items-center gap-2.5 py-20 px-5 text-center text-[var(--text-sub)] fade-in',
     emptyTitle: 'text-lg font-semibold text-[var(--text)]',
@@ -300,7 +342,7 @@ const styles = tv({
     notFoundTitle: 'text-2xl font-bold text-[var(--text)]',
     notFoundSub: 'text-[var(--text-sub)] text-sm',
     scrollTopBtn:
-      'fixed bottom-[60px] right-[40px] w-11 h-11 bg-[var(--text)] text-[var(--bg)] rounded-full flex items-center justify-center opacity-0 transition-[opacity] duration-200 shadow-[0_4px_14px_rgba(0,0,0,0.25)]',
+      'fixed bottom-[160px] xl:bottom-[100px] right-[18px] sm:right-[40px] w-11 h-11 bg-[var(--text)] text-[var(--bg)] rounded-full flex items-center justify-center opacity-0 transition-[opacity] duration-200 shadow-[0_4px_14px_rgba(0,0,0,0.25)]',
     scrollTopBtnVisible: 'opacity-100 pointer-events-auto',
   },
 })
@@ -325,6 +367,20 @@ const s = styles()
       :loading="loading"
       @done="ready = true"
     />
+
+    <div :class="s.topNote()">
+      <div :class="s.topNoteInner()">
+        Сделано с помощью
+        <a
+          :class="s.topNoteLink()"
+          href="https://alwib.ru"
+          target="_blank"
+          rel="noreferrer"
+        >
+          alwib.ru
+        </a>
+      </div>
+    </div>
 
     <!-- Back button — only in preview mode -->
     <button v-if="!props.slug" :class="s.backBtn()" @click="router.push('/')">
@@ -374,7 +430,7 @@ const s = styles()
               {{ displayDescription }}
             </p>
             <div v-if="displayDomain" :class="s.bannerDomain()">
-              alwib.ru/{{ displayDomain }}
+              store.alwib.ru/{{ displayDomain }}
             </div>
           </div>
         </div>
@@ -477,7 +533,7 @@ const s = styles()
     </div>
 
     <!-- Product grid -->
-    <div :class="s.main()">
+    <div :class="[s.main(), cartTotalCount && s.mainWithCart()]">
       <div v-if="filtered.length === 0" :class="s.empty()">
         <svg
           width="48"
@@ -501,26 +557,39 @@ const s = styles()
           :product="product"
           :animIdx="i"
           :compact="isCompactGrid"
+          :quantity="cart.getQuantity(product.id)"
           @click="handleProductOpen(product)"
+          @increment="cart.increment"
+          @decrement="cart.decrement"
         />
       </div>
 
       <div ref="sentinelRef" style="height: 1px" />
     </div>
 
-    <footer :class="s.footer()">
+    <footer v-if="cartTotalCount" :class="s.footer()">
       <div :class="s.footerCard()">
-        <p :class="s.footerMadeWith()">
-          Сделано с помощью Alwib -
-          <a
-            :class="s.footerMadeWithLink()"
-            href="https://alwib.ru"
-            target="_blank"
-            rel="noreferrer"
-          >
-            онлайн витрина
-          </a>
-        </p>
+        <div :class="s.footerInner()">
+          <div :class="s.footerMeta()">
+            <strong :class="s.footerTitle()">
+              {{ cartTotalCount ? `${cartTotalCount} шт в корзине` : 'Корзина пуста' }}
+            </strong>
+            <span :class="s.footerSub()">
+              {{ cartTotalCount ? `${cartTotalAmountLabel} · отправка списка в WhatsApp или Telegram` : 'Добавляйте товары через плюс на карточке или в открытом товаре.' }}
+            </span>
+          </div>
+
+          <div :class="s.footerActions()">
+            <button type="button" :class="s.footerBtn()" @click="openCart">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="9" cy="20" r="1.5" />
+                <circle cx="18" cy="20" r="1.5" />
+                <path d="M3 4h2l2.2 10.1a1 1 0 0 0 .98.79h9.96a1 1 0 0 0 .98-.79L21 7H7.1" />
+              </svg>
+              Открыть корзину
+            </button>
+          </div>
+        </div>
       </div>
     </footer>
 
@@ -548,7 +617,22 @@ const s = styles()
     :product="selectedProduct"
     :whatsapp="displayWhatsapp"
     :telegram="displayTelegram"
+    :quantity="selectedProductQuantity"
+    @increment="cart.increment"
+    @decrement="cart.decrement"
     @close="selectedProduct = null"
+  />
+
+  <CartSheetDialog
+    v-if="cartOpen"
+    :items="cartItems"
+    :whatsapp="displayWhatsapp"
+    :telegram="displayTelegram"
+    @increment="cart.increment"
+    @decrement="cart.decrement"
+    @remove="cart.remove"
+    @clear="cart.clear"
+    @close="closeCart"
   />
 </template>
 

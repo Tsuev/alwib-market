@@ -13,6 +13,16 @@ export interface Product {
   views: number
 }
 
+export interface StoredCartItem {
+  productId: string
+  quantity: number
+}
+
+export interface CartLine {
+  product: Product
+  quantity: number
+}
+
 export interface StoreTag {
   id: string
   storeId: string

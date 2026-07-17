@@ -86,7 +86,7 @@ export function useStoreBuilderTour(options: StoreBuilderTourOptions) {
       popover: {
         title: '5. Настройте адрес',
         description:
-          'Задайте короткий адрес на латинице для ссылки вида `alwib.ru/ваш-магазин`. Система сразу проверяет, свободен ли он.',
+          'Задайте короткий адрес на латинице для ссылки вида `store.alwib.ru/ваш-магазин`. Система сразу проверяет, свободен ли он.',
         side: 'bottom',
         align: 'start',
       },

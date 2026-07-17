@@ -2,15 +2,22 @@
 import { tv } from 'tailwind-variants'
 import type { Product } from '@/types/types'
 import { formatRub, calcDiscount, placeholderSvg } from '@/composables/useImageToBase64'
+import CartQuantityControl from '@/components/storeBuilder/CartQuantityControl.vue'
 
 const props = withDefaults(defineProps<{
   product: Product
   animIdx: number
   compact?: boolean
+  quantity?: number
 }>(), {
   compact: false,
+  quantity: 0,
 })
-const emit = defineEmits<{ click: [product: Product] }>()
+const emit = defineEmits<{
+  click: [product: Product]
+  increment: [productId: string]
+  decrement: [productId: string]
+}>()
 
 const styles = tv({
   slots: {
@@ -19,6 +26,8 @@ const styles = tv({
     imgWrap: 'relative aspect-[4/3] overflow-hidden bg-[var(--surface-alt)]',
     imgWrapCompact: 'aspect-square',
     img: 'w-full h-full object-cover transition-transform duration-[400ms] group-hover:scale-[1.04]',
+    cartControl: 'absolute top-2.5 left-2.5 z-10',
+    cartControlCompact: 'top-2 left-2',
     badge:
       'absolute top-2.5 right-2.5 bg-[#E85D47] text-white text-[11px] font-bold px-2 py-[3px] rounded-full',
     badgeCompact: 'top-2 right-2 text-[10px] px-1.5 py-[2px]',
@@ -53,6 +62,8 @@ const {
   imgWrap,
   imgWrapCompact,
   img,
+  cartControl,
+  cartControlCompact,
   badge,
   badgeCompact,
   body,
@@ -94,6 +105,15 @@ const discount = calcDiscount(props.product.price, props.product.salePrice)
         :class="img()"
         loading="lazy"
       />
+      <div :class="[cartControl(), props.compact && cartControlCompact()]">
+        <CartQuantityControl
+          :quantity="props.quantity"
+          :size="props.compact ? 'xs' : 'sm'"
+          floating
+          @increment="emit('increment', product.id)"
+          @decrement="emit('decrement', product.id)"
+        />
+      </div>
       <span v-if="discount > 0" :class="[badge(), props.compact && badgeCompact()]">−{{ discount }}%</span>
     </div>
 
