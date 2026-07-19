@@ -38,7 +38,7 @@ const styles = tv({
     tagCompact: 'px-1.5 py-[1px] text-[10px]',
     name: 'text-[15px] font-bold text-[var(--text)] line-clamp-2 leading-snug',
     nameCompact: 'text-[13px] leading-[1.25]',
-    desc: 'text-[13px] text-[var(--text-sub)] line-clamp-2 leading-relaxed',
+    desc: 'text-[13px] text-[var(--text-sub)] line-clamp-2 leading-relaxed whitespace-pre-wrap break-words [tab-size:4]',
     descCompact: 'hidden',
     footer: 'flex items-center justify-between gap-2 mt-0.5',
     footerCompact: 'flex-col items-stretch gap-2 mt-1',

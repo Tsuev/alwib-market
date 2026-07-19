@@ -59,7 +59,7 @@ const styles = tv({
     tagsRow: 'flex gap-1.5 flex-wrap',
     tag: 'inline-flex items-center gap-1 px-2.5 py-[3px] bg-[rgba(var(--accent-rgb),_0.1)] text-[var(--accent)] rounded-full text-xs font-medium',
     name: 'text-[20px] sm:text-[22px] font-extrabold text-[var(--text)] leading-snug',
-    desc: 'text-sm text-[var(--text-sub)] leading-[1.7]',
+    desc: 'text-sm text-[var(--text-sub)] leading-[1.7] whitespace-pre-wrap break-words [tab-size:4]',
     priceRow: 'flex items-baseline gap-2.5',
     priceSale: 'font-bold text-[var(--accent)] text-[22px]',
     priceOrig: 'text-sm text-[var(--text-sub)] line-through',

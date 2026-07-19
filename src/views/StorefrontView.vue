@@ -288,7 +288,7 @@ const styles = tv({
       'w-full h-full bg-white/80 text-[var(--accent)] text-2xl font-black flex items-center justify-center',
     bannerTitle: 'text-[26px] sm:text-[32px] font-extrabold text-white [text-shadow:0_1px_4px_rgba(0,0,0,0.3)] stagger-in',
     bannerDescription:
-      'max-w-[680px] mt-2 text-[14px] sm:text-[15px] leading-6 text-white/92 [text-shadow:0_1px_3px_rgba(0,0,0,0.26)] stagger-in',
+      'max-w-[680px] mt-2 text-[14px] sm:text-[15px] leading-6 text-white/92 [text-shadow:0_1px_3px_rgba(0,0,0,0.26)] stagger-in whitespace-pre-wrap break-words [tab-size:4]',
     bannerDomain: 'mt-1 break-all text-[13px] text-white/80 stagger-in',
     stickyBar:
       'sticky top-0 z-50 bg-[var(--bg)] border-b border-transparent transition-[background,border-color,backdrop-filter] duration-200',
