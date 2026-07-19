@@ -19,17 +19,21 @@ const s = tv({
     title: 'text-[20px] font-bold text-[var(--text)]',
     subtitle: 'text-sm text-[var(--text-sub)] mt-1 pr-8 sm:pr-10',
     closeBtn: 'absolute top-3 sm:top-4 right-3 sm:right-4 w-8 h-8 flex items-center justify-center rounded-full text-[var(--text-sub)] hover:bg-[var(--surface-alt)] hover:text-[var(--text)] transition-colors border-0 bg-transparent cursor-pointer',
-    body: 'p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 overflow-y-auto',
+    body: 'p-4 sm:p-6 flex flex-col gap-3 sm:gap-4 overflow-y-auto',
     card: 'relative rounded-[20px] border-2 p-4 sm:p-5 flex flex-col gap-4 transition-all duration-200',
     cardFree: 'border-[var(--border-color)] bg-[var(--surface-alt)]',
     cardPro: 'border-[var(--accent)] bg-[linear-gradient(180deg,rgba(var(--accent-rgb),_0.11),rgba(var(--accent-rgb),_0.03))]',
-    cardCurrentBadge: 'absolute top-3 right-3 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full',
+    cardCurrentBadge: 'inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider',
     cardCurrentBadgeFree: 'bg-[var(--border-color)] text-[var(--text-sub)]',
     cardCurrentBadgePro: 'bg-[var(--accent)] text-white',
     planHeader: 'flex items-start justify-between gap-3',
+    planTitleRow: 'flex items-center gap-2',
     planName: 'text-[16px] font-bold text-[var(--text)]',
     planDescription: 'mt-1 text-[12px] leading-5 text-[var(--text-sub)]',
     priceBlock: 'shrink-0 text-right min-w-[92px] sm:min-w-[108px]',
+    pricePromo: 'flex flex-col items-end gap-1',
+    priceOld: 'text-[13px] sm:text-[15px] leading-none text-[var(--text-sub)] line-through opacity-90',
+    priceBadge: 'inline-flex items-center rounded-full bg-[var(--accent)]/14 px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--accent)]',
     price: 'flex items-baseline justify-end gap-1 whitespace-nowrap',
     priceAmount: 'text-[30px] sm:text-[32px] leading-none font-bold text-[var(--text)]',
     priceCurrency: 'text-[30px] sm:text-[32px] leading-none font-bold text-[var(--text)]',
@@ -108,8 +112,14 @@ async function handleCheckout() {
         <div :class="[s.card(), s.cardFree()]">
           <div :class="s.planHeader()">
             <div>
-            <p :class="s.planName()">Free</p>
-            <p :class="s.planDescription()">Для старта и базовой витрины</p>
+              <div :class="s.planTitleRow()">
+                <p :class="s.planName()">Free</p>
+                <span
+                  v-if="!store.isPro"
+                  :class="[s.cardCurrentBadge(), s.cardCurrentBadgeFree()]"
+                >Текущий</span>
+              </div>
+              <p :class="s.planDescription()">Для старта и базовой витрины</p>
             </div>
             <div :class="s.priceBlock()">
               <div :class="s.price()">
@@ -139,17 +149,20 @@ async function handleCheckout() {
 
         <!-- Pro card -->
         <div :class="[s.card(), s.cardPro()]">
-          <span
-            v-if="store.isPro"
-            :class="[s.cardCurrentBadge(), s.cardCurrentBadgePro()]"
-          >Текущий</span>
-
           <div :class="s.planHeader()">
             <div>
-            <p :class="s.planName()">Pro</p>
-            <p :class="s.planDescription()">Полный доступ для рабочего магазина</p>
+              <div :class="s.planTitleRow()">
+                <p :class="s.planName()">Pro</p>
+                <span
+                  v-if="store.isPro"
+                  :class="[s.cardCurrentBadge(), s.cardCurrentBadgePro()]"
+                >Текущий</span>
+              </div>
+              <p :class="s.planDescription()">Полный доступ для рабочего магазина</p>
             </div>
-            <div :class="s.priceBlock()">
+            <div :class="[s.priceBlock(), s.pricePromo()]">
+              <div :class="s.priceOld()">1500 ₽ / месяц</div>
+              <div :class="s.priceBadge()">-54%</div>
               <div :class="s.price()">
                 <span :class="s.priceAmount()">690</span>
                 <span :class="s.priceCurrency()">₽</span>

@@ -5,7 +5,7 @@ export const FREE_THEME_IDS = new Set(['minimal', 'organic', 'editorial'])
 export const THEMES: Record<string, Theme> = {
   minimal: {
     id: 'minimal',
-    name: 'Minimal Clean',
+    name: 'Чистый минимализм',
     '--bg': '#ffffff',
     '--surface': '#ffffff',
     '--surface-alt': '#f8f8f8',
@@ -22,7 +22,7 @@ export const THEMES: Record<string, Theme> = {
   },
   organic: {
     id: 'organic',
-    name: 'Soft Organic',
+    name: 'Мягкий органик',
     '--bg': '#fafaf8',
     '--surface': '#ffffff',
     '--surface-alt': '#f3f0eb',
@@ -39,7 +39,7 @@ export const THEMES: Record<string, Theme> = {
   },
   editorial: {
     id: 'editorial',
-    name: 'Bold Editorial',
+    name: 'Акцентная',
     '--bg': '#f2f2f0',
     '--surface': '#ffffff',
     '--surface-alt': '#e8e8e4',
@@ -56,7 +56,7 @@ export const THEMES: Record<string, Theme> = {
   },
   darkminimal: {
     id: 'darkminimal',
-    name: 'Dark Minimal',
+    name: 'Тёмный минимализм',
     '--bg': '#0f0f12',
     '--surface': '#1a1a22',
     '--surface-alt': '#222230',
@@ -73,7 +73,7 @@ export const THEMES: Record<string, Theme> = {
   },
   darkwarm: {
     id: 'darkwarm',
-    name: 'Dark Warm',
+    name: 'Тёплая тёмная',
     '--bg': '#16130f',
     '--surface': '#211d18',
     '--surface-alt': '#2a2520',
@@ -90,7 +90,7 @@ export const THEMES: Record<string, Theme> = {
   },
   pinklight: {
     id: 'pinklight',
-    name: 'Pink Light',
+    name: 'Светло-розовая',
     '--bg': '#fff5f7',
     '--surface': '#ffffff',
     '--surface-alt': '#fde8ed',
@@ -107,7 +107,7 @@ export const THEMES: Record<string, Theme> = {
   },
   pinkdark: {
     id: 'pinkdark',
-    name: 'Pink Dark',
+    name: 'Тёмно-розовая',
     '--bg': '#181014',
     '--surface': '#231520',
     '--surface-alt': '#2e1b29',
@@ -124,7 +124,7 @@ export const THEMES: Record<string, Theme> = {
   },
   redlight: {
     id: 'redlight',
-    name: 'Red & White',
+    name: 'Красно-белая',
     '--bg': '#ffffff',
     '--surface': '#ffffff',
     '--surface-alt': '#fef2f2',
@@ -141,7 +141,7 @@ export const THEMES: Record<string, Theme> = {
   },
   greendark: {
     id: 'greendark',
-    name: 'Green Dark',
+    name: 'Тёмно-зелёная',
     '--bg': '#0d1410',
     '--surface': '#141f18',
     '--surface-alt': '#1b2a20',
