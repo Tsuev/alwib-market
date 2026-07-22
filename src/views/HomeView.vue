@@ -686,7 +686,7 @@ async function handleSignOut() {
           <div :class="s.formGroup()">
             <label :class="s.label()">Адрес магазина</label>
             <div :class="[s.domainWrap(), domainFocused && s.domainWrapFocus(), domainError && 'border-[#E85D47]']" data-tour="store-domain">
-              <span :class="s.domainPrefix()">alwib.ru/</span>
+              <span :class="s.domainPrefix()">store.alwib.ru/</span>
               <input
                 :class="s.domainInput()"
                 placeholder="Название магазина на Английском языке"
