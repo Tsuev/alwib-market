@@ -4,7 +4,7 @@ import type { Plan } from '@/types/types'
 export type SubscriptionStatus = 'inactive' | 'active' | 'past_due'
 
 export const FREE_PRODUCT_LIMIT = 10
-export const PRO_PRODUCT_LIMIT = 100
+export const PRO_PRODUCT_LIMIT = 1000
 
 const FALLBACK_FREE_THEME_ID =
   Object.values(THEMES).find((theme) => FREE_THEME_IDS.has(theme.id))?.id ?? 'minimal'

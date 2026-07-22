@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { tv } from 'tailwind-variants'
 import Button from 'primevue/button'
 import type { Product } from '@/types/types'
@@ -69,6 +69,9 @@ const {
   lockButton,
 } = styles()
 
+const visibleTags = computed(() => props.product.tags.slice(0, 3))
+const hiddenTagsCount = computed(() => Math.max(props.product.tags.length - 3, 0))
+
 function handleDelete() {
   leaving.value = true
   setTimeout(() => emit('delete', props.product.id), 260)
@@ -108,7 +111,8 @@ function handleDelete() {
         <span v-else :class="priceMain()">{{ formatRub(product.price) }}</span>
       </div>
       <div :class="tagsRow()">
-        <span v-for="t in product.tags.slice(0, 3)" :key="t" :class="tag()">{{ t }}</span>
+        <span v-for="t in visibleTags" :key="t" :class="tag()">{{ t }}</span>
+        <span v-if="hiddenTagsCount > 0" :class="tag()">+{{ hiddenTagsCount }}</span>
       </div>
     </div>
 

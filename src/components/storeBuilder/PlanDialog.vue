@@ -63,7 +63,7 @@ const FREE_FEATURES = [
 ]
 
 const PRO_FEATURES = [
-  { text: 'До 100 товаров', ok: true },
+  { text: 'До 1000 товаров', ok: true },
   { text: 'Все темы оформления', ok: true },
   { text: 'WhatsApp для связи', ok: true },
   { text: 'Telegram для связи', ok: true },

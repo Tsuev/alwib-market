@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { tv } from 'tailwind-variants'
 import type { Product } from '@/types/types'
 import { formatRub, calcDiscount, placeholderSvg } from '@/composables/useImageToBase64'
@@ -90,6 +91,9 @@ const {
 } = styles()
 
 const discount = calcDiscount(props.product.price, props.product.salePrice)
+const visibleTagsLimit = computed(() => (props.compact ? 2 : 3))
+const visibleTags = computed(() => props.product.tags.slice(0, visibleTagsLimit.value))
+const hiddenTagsCount = computed(() => Math.max(props.product.tags.length - visibleTagsLimit.value, 0))
 </script>
 
 <template>
@@ -120,11 +124,17 @@ const discount = calcDiscount(props.product.price, props.product.salePrice)
     <div :class="[body(), props.compact && bodyCompact()]">
       <div v-if="product.tags.length" :class="tagsRow()">
         <span
-          v-for="t in product.tags.slice(0, props.compact ? 2 : 3)"
+          v-for="t in visibleTags"
           :key="t"
           :class="[tag(), props.compact && tagCompact()]"
         >
           {{ t }}
+        </span>
+        <span
+          v-if="hiddenTagsCount > 0"
+          :class="[tag(), props.compact && tagCompact()]"
+        >
+          +{{ hiddenTagsCount }}
         </span>
       </div>
       <div :class="[name(), props.compact && nameCompact()]">{{ product.name }}</div>
