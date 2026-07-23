@@ -20,15 +20,32 @@ import type { Product, StoreData } from '@/types/types'
 const props = defineProps<{ slug?: string }>()
 
 const originalTitle = document.title
+const originalMetaTags = new Map<string, string | null>()
+const originalCanonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href ?? null
 
 function setMetaTag(attr: string, key: string, content: string) {
-  let el = document.querySelector<HTMLMetaElement>(`meta[${attr}="${key}"]`)
+  const selector = `meta[${attr}="${key}"]`
+  if (!originalMetaTags.has(selector)) {
+    originalMetaTags.set(selector, document.querySelector<HTMLMetaElement>(selector)?.content ?? null)
+  }
+
+  let el = document.querySelector<HTMLMetaElement>(selector)
   if (!el) {
     el = document.createElement('meta')
     el.setAttribute(attr, key)
     document.head.appendChild(el)
   }
   el.setAttribute('content', content)
+}
+
+function setCanonical(url: string) {
+  let el = document.querySelector<HTMLLinkElement>('link[rel="canonical"]')
+  if (!el) {
+    el = document.createElement('link')
+    el.rel = 'canonical'
+    document.head.appendChild(el)
+  }
+  el.href = url
 }
 
 const originalFavicon = (document.querySelector<HTMLLinkElement>('link[rel="icon"]'))?.href ?? ''
@@ -44,20 +61,46 @@ function setFavicon(url: string | null) {
   el.type = 'image/png'
 }
 
-function applyPageMeta(name: string, photo: string | null) {
-  document.title = name || 'Магазин'
-  setMetaTag('property', 'og:title', name)
-  setMetaTag('name', 'twitter:title', name)
-  if (photo) {
-    setMetaTag('property', 'og:image', photo)
-    setMetaTag('name', 'twitter:image', photo)
-    setFavicon(photo)
-  }
+function applyPageMeta(name: string, description: string, photo: string | null) {
+  const title = name.trim() || 'Магазин'
+  const pageDescription = description.trim() || `Витрина магазина «${title}»`
+  const pageUrl = window.location.href
+  const imageUrl = photo || new URL('/logo.png', window.location.origin).href
+
+  document.title = title
+  setMetaTag('name', 'description', pageDescription)
+  setMetaTag('property', 'og:type', 'website')
+  setMetaTag('property', 'og:site_name', title)
+  setMetaTag('property', 'og:title', title)
+  setMetaTag('property', 'og:description', pageDescription)
+  setMetaTag('property', 'og:url', pageUrl)
+  setMetaTag('property', 'og:image', imageUrl)
+  setMetaTag('name', 'twitter:card', 'summary_large_image')
+  setMetaTag('name', 'twitter:title', title)
+  setMetaTag('name', 'twitter:description', pageDescription)
+  setMetaTag('name', 'twitter:image', imageUrl)
+  setCanonical(pageUrl)
+  setFavicon(imageUrl)
 }
 
 onUnmounted(() => {
   document.title = originalTitle
   setFavicon(originalFavicon || null)
+  originalMetaTags.forEach((content, selector) => {
+    const el = document.querySelector<HTMLMetaElement>(selector)
+    if (content === null) {
+      el?.remove()
+    } else if (el) {
+      el.content = content
+    }
+  })
+
+  const canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]')
+  if (originalCanonical === null) {
+    canonical?.remove()
+  } else if (canonical) {
+    canonical.href = originalCanonical
+  }
 })
 
 const router = useRouter()
@@ -140,7 +183,7 @@ onMounted(async () => {
       const effectiveTheme = getEffectiveThemeId(theme, activeSubscription)
       publicStoreData.value = { ...rest, theme: effectiveTheme }
       applyTheme(effectiveTheme)
-      applyPageMeta(rest.name, rest.photo)
+      applyPageMeta(rest.name, rest.description, rest.photo)
       void trackStoreView(id)
 
       // Загружаем товары отдельно — прелоадер показывает магазин с именем/лого,
