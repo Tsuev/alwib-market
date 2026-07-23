@@ -215,6 +215,8 @@ const styles = tv({
     // Google button
     googleBtn:
       'w-full py-[11px] rounded-[10px] border-[1.5px] border-[#E5E5E5] bg-white text-[#333] font-semibold text-[14px] flex items-center justify-center gap-2.5 cursor-pointer transition-[border-color,background] duration-[180ms] hover:border-[#10b981] hover:bg-[#f0fdf4]',
+    legalNotice: 'mt-[-6px] mb-4 text-center text-[11px] leading-[1.55] text-[#999]',
+    legalLink: 'text-[#059669] font-semibold hover:text-[#047857] underline underline-offset-2',
     spinner:
       'w-4 h-4 border-2 border-white/30 border-t-white rounded-full spin-anim inline-block',
   },
@@ -606,6 +608,14 @@ const s = styles()
               {{ mode === 'forgot' ? 'Отправить письмо →' : mode === 'login' ? 'Войти →' : 'Создать аккаунт →' }}
             </template>
           </button>
+
+          <p v-if="mode === 'register'" :class="s.legalNotice()">
+            Регистрируясь, вы автоматически принимаете
+            <RouterLink to="/documents/terms" :class="s.legalLink()">Пользовательское соглашение</RouterLink>,
+            <RouterLink to="/documents/privacy" :class="s.legalLink()">Политику конфиденциальности</RouterLink>
+            и даёте согласие на
+            <RouterLink to="/documents/consent" :class="s.legalLink()">обработку персональных данных</RouterLink>.
+          </p>
 
           <!-- Forgot password link (login mode only) -->
           <div v-if="mode === 'login'" style="text-align: center; margin-top: -8px; margin-bottom: 12px; animation: fadeUp 350ms 140ms ease both">

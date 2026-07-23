@@ -13,6 +13,12 @@ const router = createRouter({
       meta: { public: true },
     },
     {
+      path: '/documents/:slug(terms|privacy|offer|consent|cookies)',
+      name: 'document',
+      component: () => import('../views/DocumentsView.vue'),
+      meta: { public: true },
+    },
+    {
       path: '/',
       name: 'home',
       component: HomeView,

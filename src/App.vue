@@ -1,5 +1,6 @@
 <template>
   <RouterView />
+  <CookieNotice />
   <Toast />
   <ConfirmDialog />
 </template>
@@ -9,6 +10,7 @@ import { onMounted } from 'vue'
 import { RouterView } from 'vue-router'
 import Toast from 'primevue/toast'
 import ConfirmDialog from 'primevue/confirmdialog'
+import CookieNotice from '@/components/CookieNotice.vue'
 
 onMounted(() => {
   // Скрываем inline прелоадер из index.html после монтирования Vue
